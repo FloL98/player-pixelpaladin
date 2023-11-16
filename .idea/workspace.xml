@@ -4,25 +4,102 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="" />
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/restadapter/PlanetDto.kt" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+        <option value="Kotlin Interface" />
+        <option value="Kotlin File" />
+        <option value="Kotlin Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="JpbToolWindowState">
+    <option name="isToolWindowVisible" value="false" />
+  </component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
   <component name="ProjectId" id="2WthjM8DcVaKtQ949EZrJjjL788" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
+    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
+    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
+    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.35172415&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;profiler.jvm&quot;,
+    &quot;spring.configuration.checksum&quot;: &quot;258e7785832f34494e839e6d2ad46b34&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
+  <component name="ReactorSettings">
+    <option name="notificationShown" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveKotlinTopLevelDeclarationsDialog.RECENTS_KEY">
+      <recent name="thkoeln.dungeon.domainprimitives" />
+      <recent name="thkoeln.dungeon.robot.domain" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Spring Boot.DungeonPlayerMainApplication">
+    <configuration name="DungeonPlayerMainApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <option name="ALTERNATIVE_JRE_PATH" value="C:\Program Files\Java\jdk-21" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+      <module name="player-pixelpaladin" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="thkoeln.dungeon.DungeonPlayerMainApplicationKt" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Unnamed" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+      <module name="player-pixelpaladin" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="thkoeln.dungeon.DungeonPlayerMainApplication1" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Spring Boot.DungeonPlayerMainApplication" />
+      <item itemvalue="Spring Boot.Unnamed" />
+    </list>
+  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -31,7 +108,53 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1697557918738</updated>
+      <workItem from="1697557920280" duration="4799000" />
+      <workItem from="1697565714513" duration="5942000" />
+      <workItem from="1697720521693" duration="7393000" />
+      <workItem from="1697730186479" duration="3775000" />
+      <workItem from="1697735580921" duration="10000" />
+      <workItem from="1697805921526" duration="9973000" />
+      <workItem from="1698151296701" duration="17806000" />
+      <workItem from="1698175900748" duration="7433000" />
+      <workItem from="1698228398968" duration="30785000" />
+      <workItem from="1698403365325" duration="14354000" />
+      <workItem from="1698503276989" duration="3262000" />
+      <workItem from="1698510135530" duration="6523000" />
+      <workItem from="1698583151217" duration="3933000" />
+      <workItem from="1698587108153" duration="19881000" />
+      <workItem from="1698657333378" duration="14209000" />
+      <workItem from="1698699991038" duration="1183000" />
+      <workItem from="1698745264915" duration="17369000" />
+      <workItem from="1698925781370" duration="15191000" />
+      <workItem from="1698942341631" duration="8666000" />
+      <workItem from="1699006130840" duration="1905000" />
+      <workItem from="1699013093505" duration="1015000" />
+      <workItem from="1699034391582" duration="150000" />
+      <workItem from="1699099832015" duration="19868000" />
+      <workItem from="1699196329288" duration="6629000" />
+      <workItem from="1699263382817" duration="4681000" />
+      <workItem from="1699447714316" duration="3316000" />
+      <workItem from="1699711165228" duration="9405000" />
+      <workItem from="1700137690812" duration="2949000" />
     </task>
     <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>
