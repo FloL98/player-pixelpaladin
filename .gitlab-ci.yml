@@ -1,0 +1,51 @@
+include:
+  - project: "the-microservice-dungeon/devops-team/common-ci-cd"
+    ref: "main"
+    file: "helm/package-publish.yaml"
+
+image: docker:20.10.16
+services:
+  - docker:20.10.16-dind
+
+
+
+variables:
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  PATH_TO_CHART: "helm-chart"
+  CHART_NAME: "player-pixelpaladin"
+
+stages:          # List of stages for jobs, and their order of execution
+  - helm
+  - build
+  - docker
+
+
+maven-build:
+  image: maven:3.8.4-openjdk-17
+
+  stage: build
+  script: "mvn clean package -B"
+  artifacts:
+    paths:
+      - target/*.jar
+
+
+
+docker-build:
+  stage: docker
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+
+helm-package-publish:
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+      changes:
+        - ${PATH_TO_CHART}/**/*
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: always

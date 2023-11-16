@@ -1,0 +1,38 @@
+name: "player-pixelpaladin"
+replicas: 1
+image:
+  name: "registry.gitlab.com/the-microservice-dungeon/player-teams/player-pixelpaladin"
+  tag: "latest"
+  imagePullPolicy: "IfNotPresent"
+serviceName: "player-pixelpaladin"
+port: 8080
+lb:
+  active: true
+
+
+
+# Whatever port you want to expose this service (30000-32768)
+lbNodePort: 31000
+env:
+  - name: GAME_SERVICE
+    value: "http://game-service.game:8080"
+  - name: RABBITMQ_USERNAME
+    value: "admin"
+  - name: RABBITMQ_PASSWORD
+    value: "admin"
+  - name: RABBITMQ_HOST
+    value: "rabbitmq-service.rabbitmq"
+  - name: RABBITMQ_PORT
+    value: "5672"
+
+#ressources optional, aber empfehlenswert
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 500m
+  limits:
+    memory: 2G
+    cpu: 2000m
+
+
+
