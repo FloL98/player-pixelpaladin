@@ -11,8 +11,10 @@ import thkoeln.dungeon.planet.domain.PlanetRepository
 import thkoeln.dungeon.planet.domain.PlanetDomainService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import thkoeln.dungeon.domainprimitives.MineableResourceType
 import thkoeln.dungeon.eventlistener.concreteevents.PlanetDiscoveredEvent
 import thkoeln.dungeon.eventlistener.concreteevents.ResourceMinedEvent
+import thkoeln.dungeon.planet.domain.ShortestPathCalculator
 import java.util.*
 
 
@@ -37,6 +39,12 @@ class PlanetApplicationService @Autowired constructor(
         }
         else
             planetRepository.save(planet)
+
+        //only for shortest path testing purpose
+        /*val pathCoal = ShortestPathCalculator(findAll()).shortestPathToString(planet,MineableResourceType.COAL)
+        val pathIron = ShortestPathCalculator(findAll()).shortestPathToString(planet,MineableResourceType.IRON)
+        logger.info("Shortest path COAL: $pathCoal")
+        logger.info("Shortest path IRON: $pathIron")*/
     }
 
 
@@ -81,12 +89,19 @@ class PlanetApplicationService @Autowired constructor(
     }
 
     fun updateResourcesOnPlanetByEvent(resourceMinedEvent: ResourceMinedEvent){
-        val planet = findByPlanetId(resourceMinedEvent.planetId)
-        planet.mineableResource = resourceMinedEvent.resource
-        planetRepository.save(planet)
+        val planetOpt = planetRepository.findByPlanetId(resourceMinedEvent.planetId)//findByPlanetId(resourceMinedEvent.planetId)
+        if(planetOpt.isPresent){
+            val planet = planetOpt.get()
+            planet.mineableResource = resourceMinedEvent.resource
+            planetRepository.save(planet)
+        }
     }
 
     fun deleteAll(){
         planetRepository.deleteAll()
+    }
+
+    fun findAll(): List<Planet>{
+        return planetRepository.findAll()
     }
 }

@@ -14,6 +14,7 @@ import java.util.*
 import thkoeln.dungeon.planet.domain.Planet
 import thkoeln.dungeon.robot.domain.*
 import kotlin.collections.ArrayList
+import kotlin.math.log
 import kotlin.random.Random
 
 
@@ -90,6 +91,8 @@ class RobotApplicationService@Autowired constructor(
         }
     }
 
+
+    //toDO: nimmt viel zeit in anspruch
     fun checkIfXPercentHaveUpgradeTypeLevelOrHigher(level: Int, percentage: Float, upgradeType: UpgradeType):Boolean{
         val robots: MutableList<Robot> = robotRepository.findAll() as MutableList<Robot>
         var robotsWithUpgradeTypeLevel : MutableList<Robot> = ArrayList()
@@ -163,6 +166,39 @@ class RobotApplicationService@Autowired constructor(
         }
     }
 
+    /*
+        Methode soll eigentlich erst benutzt werden, wenn shortest path zu keinem ergebnis führt. Dann soll darauf geachtet
+        werden, dass man in der Äußeren Zone bleibt, da dort die Wahrscheinlichkeit für kohle am höchsten ist und es
+        sollen unvisited planets bevorzugt werden
+     */
+    fun findCoalPlanetOrLikeliestToContainCoalToMoveTo(robot: Robot): Planet?{
+        if(MineableResourceType.COAL == robot.planet._resourceType)
+            return null
+        val possibleNeighbours = robot.getAllNeighbourPlanets()
+        for(neighbour in possibleNeighbours){
+            if(MineableResourceType.COAL== neighbour._resourceType)
+                return neighbour
+        }
+        if(robot.moveHistory.isNotEmpty()) {
+            val lastVisitedPlanet = planetApplicationService.findByPlanetId(robot.moveHistory.last())
+            if (possibleNeighbours.size == 1)
+                return lastVisitedPlanet
+            else
+                possibleNeighbours.remove(lastVisitedPlanet)
+        }
+        val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.hasBeenVisited() }
+            .sortedBy{it.movementDifficulty.difficulty}
+        if(unvisitedPossibleNeighbours.isNotEmpty()) {
+            return unvisitedPossibleNeighbours.first
+        }
+        else {
+            return if (possibleNeighbours.isNotEmpty())
+                possibleNeighbours.sortedBy{it.movementDifficulty.difficulty}[0]
+            else
+                null
+        }
+    }
+
     fun moneyNeededForNextUpgrade(robot: Robot, game: Game, upgradeType: UpgradeType): Moneten?{
         val itemName = getNextUpgradeLevelAsString(robot,upgradeType)
         val shopItem = game.shop.filter { it.name == itemName}
@@ -187,15 +223,16 @@ class RobotApplicationService@Autowired constructor(
         //return robots.filter { it.job == job }.toMutableList()
     }
 
-    // toDO überarbeiten
+    // toDO überarbeiten, nimmt auch viel zeit ein
     fun upgradeRobotsJobs(game: Game){
         val strategy = strategyService.getStrategyByGame(game)
         //Begrenzung, damit es nicht zu viele Job-upgrades gibt, aber keine Roboter mehr die Geld einbringen
-        if(strategy.maxNumberOfRobots.toDouble()/getAllRobots().filter { it.job.isMiner() }.size.toDouble() < 1.25) {
+        val allRobots = getAllRobots()
+        if(strategy.maxNumberOfRobots.toDouble()/allRobots.filter { it.job.isMiner() }.size.toDouble() < 1.25) {
 
-            val coalRobots = getRobotsByJob(RobotJob.COAL_WORKER).toMutableList()
+            val coalRobots = robotRepository.findByJob(RobotJob.COAL_WORKER).toMutableList()
 
-            val ironRobots = getRobotsByJob(RobotJob.IRON_WORKER).toMutableList()
+            val ironRobots = robotRepository.findByJob(RobotJob.IRON_WORKER).toMutableList()
             var numberOfNewIronRobots = strategy.maxNumberOfIronMiners - ironRobots.size
             if (numberOfNewIronRobots > 0) {
                 val possibleIronRobots = coalRobots.filter { it.inventory.usedStorage == 0 }
@@ -208,9 +245,10 @@ class RobotApplicationService@Autowired constructor(
                     saveRobot(possibleIronRobots[i])
                     logger.info("Changed one robot to iron-worker!")
                 }
+
             }
 
-            val gemRobots = getRobotsByJob(RobotJob.GEM_WORKER).toMutableList()
+            val gemRobots = robotRepository.findByJob(RobotJob.GEM_WORKER).toMutableList()
             var numberOfNewGemRobots = strategy.maxNumberOfGemMiners - gemRobots.size
             if (numberOfNewGemRobots > 0) {
                 val possibleGemRobots = coalRobots.filter { it.inventory.usedStorage == 0 }
@@ -224,7 +262,7 @@ class RobotApplicationService@Autowired constructor(
                 }
             }
 
-            val fighterRobots = getRobotsByJob(RobotJob.FIGHTER).toMutableList()
+            val fighterRobots = robotRepository.findByJob(RobotJob.FIGHTER).toMutableList()
             var numberOfNewFighterRobots = strategy.maxNumberOfGemMiners - fighterRobots.size
             if (numberOfNewFighterRobots > 0) {
                 val possibleFighterRobots = coalRobots.filter { it.inventory.usedStorage == 0 }
@@ -246,6 +284,11 @@ class RobotApplicationService@Autowired constructor(
 
     fun getAllEnemyRobots(): List<EnemyRobot>{
         return enemyRobotRepository.findAll().toList()
+    }
+
+    fun removeAllDeadRobots(){
+        robotRepository.removeRobotByAlive(false)
+        enemyRobotRepository.removeRobotByAlive(false)
     }
 
 

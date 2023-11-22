@@ -22,6 +22,7 @@ import thkoeln.dungeon.robot.application.RobotApplicationService
 import thkoeln.dungeon.robot.application.RobotEventHandleService
 import thkoeln.dungeon.robot.application.RobotStrategyService
 import thkoeln.dungeon.strategy.application.StrategyService
+import java.util.concurrent.CountDownLatch
 
 /**
  * This service class listen to the messages queue and redirect incoming events
@@ -50,6 +51,9 @@ class PlayerEventListener @Autowired constructor(
         this.applicationEventPublisher = applicationEventPublisher
     }
 
+    //this attribute is used to synchronize started-event and robotsRevealedEvent to send commands after these two happended
+    private var commandLatch = CountDownLatch(2)
+
     /**
      * Listener to all events that the core services send to the player
      * @param eventIdStr
@@ -71,14 +75,14 @@ class PlayerEventListener @Autowired constructor(
         payload: String,
         message: Message
     ) {
-        if(true){
-        //if(type=="RoundStatus"){
+
+        //if(type == "RoundStatus" ||type =="RobotsRevealed") {
             logger.info(
                 """${environment.getProperty("ANSI_BLUE")}====> received event ... 
-	 {type=$type, eventId=$eventIdStr, transactionId=$transactionIdStr, playerId=$playerIdStr, version=$version, timestamp=$timestampStr
+	 {type=$type, eventId=$eventIdStr, transactionId=$transactionIdStr, playerId=$playerIdStr, version=$version, timestamp=${timestampStr}
 	$payload${environment.getProperty("ANSI_RESET")}"""
             )
-        }
+        //}
 
 
         val eventHeader = EventHeader(type, eventIdStr, playerIdStr, transactionIdStr, timestampStr, version)
@@ -107,7 +111,7 @@ class PlayerEventListener @Autowired constructor(
                 EventType.ROUND_STATUS -> handleRoundStatusEvent(event as RoundStatusEvent)
                 EventType.TRADABLE_PRICES -> handleTradablePricesEvent(event as TradablePricesEvent)
                 EventType.ROBOT_SPAWNED -> handleRobotSpawnedIntegrationEvent(event as RobotSpawnedEvent)
-                EventType.ROBOTS_REVEALED -> handleRobotsRevealedIntegrationEvent(event as RobotsRevealedEvent)
+                EventType.ROBOTS_REVEALED -> handleRobotsRevealedEvent(event as RobotsRevealedEvent)
                 EventType.PLANET_DISCOVERED -> handlePlanetDiscoveredEvent(event as PlanetDiscoveredEvent)
                 EventType.BANK_ACCOUNT_TRANSACTION_BOOKED -> handleBankAccountTransactionBookedEvent(event as BankAccountTransactionBookedEvent)
                 EventType.RESOURCE_MINED -> handleResourceMinedEvent(event as ResourceMinedEvent)
@@ -173,10 +177,13 @@ class PlayerEventListener @Autowired constructor(
 
     private fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
         planetApplicationService.updatePlanetAndNeighboursFromEvent(planetDiscoveredEvent)
+
     }
 
-    private fun handleRobotsRevealedIntegrationEvent(robotsRevealedEvent: RobotsRevealedEvent){
+    private fun handleRobotsRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
         robotEventHandleService.handleRobotRevealedIntegrationEvent(robotsRevealedEvent)
+        commandLatch.countDown()
+        handleRobotsRevealedAndRoundStartedBothReady()
     }
 
     private fun handleGameStatusEvent(gameStatusEvent: GameStatusEvent) {
@@ -195,6 +202,7 @@ class PlayerEventListener @Autowired constructor(
             strategyService.deleteAllStrategies()
             robotApplicationService.resetEnemyRepository()
             playerApplicationService.updatePlayerIngameStatus(false)
+            commandLatch = CountDownLatch(2)
             //playerApplicationService.searchForOpenGameAndJoin()
         }
     }
@@ -218,14 +226,25 @@ class PlayerEventListener @Autowired constructor(
         if(event.roundStatus == RoundStatusType.STARTED) {
             logger.info("----------------------------------------------\n----------------------------------------------\nROUND ${event.roundNumber} started!")
             logger.info("Balance: ${player.moneten.amount}")
+            robotApplicationService.removeAllDeadRobots()
             gameApplicationService.updateRoundCount(event.roundNumber)
+            strategyService.updateStrategy(game, player.moneten, robotApplicationService.getTotalNumberOfRobots())
+            logger.info("upgrade robot jobs")
+            robotApplicationService.upgradeRobotsJobs(game) //nimmt viel zeit ein
+            logger.info("upgrade robot jobs done")
+
+
             playerApplicationService.buyRobots()
             //robotStrategyService.executeCommandList()
             //playerApplicationService.letRobotsPlayRound()
-            robotStrategyService.executeCommandListParallel()
+            //robotStrategyService.executeCommandListParallel()
+
+            commandLatch.countDown()
+            handleRobotsRevealedAndRoundStartedBothReady()
 
         }
         else if(event.roundStatus == RoundStatusType.COMMAND_INPUT_ENDED){
+            commandLatch = CountDownLatch(2)
             logger.info("Command-input ended")
 
         }
@@ -233,9 +252,9 @@ class PlayerEventListener @Autowired constructor(
             logger.info("Round ended")
             //robotEventHandleService.resetCurrentEnemyList()
             robotStrategyService.clearCommandList()
-            strategyService.updateStrategy(game, player.moneten, robotApplicationService.getTotalNumberOfRobots())
-            robotApplicationService.upgradeRobotsJobs(game)
-            robotStrategyService.fillCommandList(player,game)
+
+
+            //robotStrategyService.fillCommandList(player,game)
 
         }
 
@@ -243,5 +262,18 @@ class PlayerEventListener @Autowired constructor(
 
     private fun handleTradablePricesEvent(event: TradablePricesEvent) {
         gameApplicationService.handleTradablePricesEvent(event)
+    }
+
+    /**
+     * This method executes commands after robotsrevealedEvent and Round-started both happended each round
+     */
+    private fun handleRobotsRevealedAndRoundStartedBothReady(){
+        if(commandLatch.count == 0L){
+            logger.info("handling both events and executing command list")
+            val player = playerApplicationService.queryAndIfNeededCreatePlayer()
+            val game = gameApplicationService.queryActiveGame().get()
+            robotStrategyService.fillCommandList(player,game)
+            robotStrategyService.executeCommandListParallel()
+        }
     }
 }

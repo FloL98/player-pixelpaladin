@@ -13,9 +13,9 @@ class FighterActionStrategy(val gameWorld: GameWorld, val game: Game, val robot:
 
 
     override fun getCommand(): Command? {
-        val enemyFound = gameWorld.robotApplicationService.getAllEnemyRobots().filter { it.planetId == robot.planet?.planetId }
-        if(enemyFound.isNotEmpty())
-            return AttackEnemyStrategy(gameWorld, this.game, this.robot, this.player, this.strategy, enemyFound[0].planetId!!).getCommand()
+        val enemyFound = gameWorld.robotApplicationService.getAllEnemyRobots().filter { it.planetId == robot.planet.planetId }
+        if(enemyFound.isNotEmpty() && robot.energy >= 1)
+            return AttackEnemyStrategy(gameWorld, this.game, this.robot, this.player, this.strategy, enemyFound[0].planetId).getCommand()
         else if(robot.energy < robot.planet.movementDifficulty.difficulty)
             return RefreshEnergyStrategy(gameWorld, this.game, this.robot, this.player, this.strategy).getCommand()
         else if(robot.healthLevel < strategy.currentFighterMaxLevels && this.strategy.budgetForFightingUpgrades.amount >= gameWorld.robotApplicationService.moneyNeededForNextUpgrade(robot,game,UpgradeType.HEALTH)?.amount!!)

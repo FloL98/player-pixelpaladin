@@ -5,23 +5,23 @@ package thkoeln.dungeon.robot.domain
 import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.*
-import kotlinx.serialization.Serializable
+import kotlinx.coroutines.sync.Mutex
 import java.util.UUID
 import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.domainprimitives.Inventory
-import thkoeln.dungeon.domainprimitives.MovementDifficulty
+import thkoeln.dungeon.domainprimitives.MineableResourceType
 import thkoeln.dungeon.planet.domain.Planet
-import thkoeln.dungeon.restadapter.PlanetShortDto
 import thkoeln.dungeon.restadapter.RobotDto
 
 
 @Entity
+@Table(indexes = [Index(columnList = "robotId"),Index(columnList = "job")])
 @JsonIgnoreProperties
 class Robot(
 
 ) {
+
     @Id
     @JsonIgnore
     val id: UUID = UUID.randomUUID()
@@ -35,7 +35,7 @@ class Robot(
     //@JsonIgnore
     var planet: Planet = Planet()
 
-    var alive: Boolean = false
+    var alive: Boolean = true
     var maxHealth: Int = 0
     var maxEnergy: Int = 0
     var energyRegen: Int = 0
@@ -60,6 +60,8 @@ class Robot(
     //todo wie gut farmt ein Roboter und welchen Einfluss hat es auf den gameplan
     val farmPower: Int
         get() =  miningSpeedLevel +miningLevel
+
+    //job dictates, which resource the robot is supposed to farm (NOT which he CAN farm)
     var job: RobotJob = RobotJob.COAL_WORKER
 
     //todo moveHistory in strategy mit einbinden
@@ -70,21 +72,33 @@ class Robot(
         return "{RobotId: $robotId , Health: $health, Energy: $energy"
     }
 
+    fun isOnFarmablePlanet():Boolean{
+        return (this.planet.mineableResource!=null && this.planet.mineableResource?.currentAmount!! > 0)
+    }
+
+    fun canFarmOnCurrentPlanet():Boolean{
+        return (this.isOnFarmablePlanet() && this.planet.mineableResource?.resourceType?.neededMiningLevel() == this.miningLevel )
+    }
+
+    fun hasSuitableJobForResource(resourceType: MineableResourceType): Boolean{
+        return (this.job.minesWhichType() == resourceType)
+    }
+
     fun getNeighbourByDirection(direction: CompassDirection): Planet?{
         return when(direction){
-            CompassDirection.NORTH -> this.planet?.northNeighbour
-            CompassDirection.EAST -> this.planet?.eastNeighbour
-            CompassDirection.SOUTH -> this.planet?.southNeighbour
-            CompassDirection.WEST -> this.planet?.westNeighbour
+            CompassDirection.NORTH -> this.planet.northNeighbour
+            CompassDirection.EAST -> this.planet.eastNeighbour
+            CompassDirection.SOUTH -> this.planet.southNeighbour
+            CompassDirection.WEST -> this.planet.westNeighbour
         }
     }
 
     fun getDirectionByNeighbour(neighbour: Planet): CompassDirection?{
         return when(neighbour){
-            this.planet?.northNeighbour -> CompassDirection.NORTH
-            this.planet?.eastNeighbour -> CompassDirection.EAST
-            this.planet?.southNeighbour -> CompassDirection.SOUTH
-            this.planet?.westNeighbour -> CompassDirection.WEST
+            this.planet.northNeighbour -> CompassDirection.NORTH
+            this.planet.eastNeighbour -> CompassDirection.EAST
+            this.planet.southNeighbour -> CompassDirection.SOUTH
+            this.planet.westNeighbour -> CompassDirection.WEST
             else -> null
         }
     }

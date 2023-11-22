@@ -20,11 +20,12 @@ class UpgradeStrategy(val gameWorld: GameWorld, val game: Game, val robot: Robot
          val itemName =  gameWorld.robotApplicationService.getNextUpgradeLevelAsString(robot, this.upgradeType)
          val shopItem = this.game.shop.filter { it.name == itemName}
          if(upgradeType.isFarmingOriented())
-            gameWorld.strategyService.subtractFromMiningBudget(this.strategy, shopItem.first().price?.amount!!)
+            gameWorld.strategyService.subtractFromMiningBudget(this.strategy, shopItem.first().price.amount)
          else
-             gameWorld.strategyService.subtractFromFightingBudget(this.strategy, shopItem.first().price?.amount!!)
+             gameWorld.strategyService.subtractFromFightingBudget(this.strategy, shopItem.first().price.amount)
          //return  gameWorld.robotApplicationService.createCommand(robot, player, CommandType.BUYING, null, null, itemName,1 )
          return Command().createUpgradePurchaseCommand(player.playerId!!,robot.robotId,shopItem.first())
+
     }
 
 }

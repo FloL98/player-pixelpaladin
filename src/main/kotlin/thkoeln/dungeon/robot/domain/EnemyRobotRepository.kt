@@ -12,6 +12,7 @@ interface EnemyRobotRepository : CrudRepository<EnemyRobot, UUID> {
 
     fun removeRobotByRobotId(robotId: UUID)
 
+    fun removeRobotByAlive(alive: Boolean)
     fun findAllByRobotIdIn(robotIdList: List<UUID> )
 
     fun findAllByPlanetId(planetId: UUID): List<EnemyRobot>

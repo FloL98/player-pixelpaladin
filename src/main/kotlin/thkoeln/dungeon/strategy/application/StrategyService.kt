@@ -91,8 +91,9 @@ class StrategyService@Autowired constructor(
 
     private fun updateMaxNumberOfRobots(strategy: Strategy){
         var currentRound = strategy.game?.currentRoundNumber!!
-        strategy.maxNumberOfRobots = 5 + (currentRound/2)
-        //darf es eine Obergrenze für Anzahl an Robots geben, wegen HTTP request?
+        //strategy.maxNumberOfRobots = 5 + (currentRound/2)
+        //testweise die maxnumber auf 300
+        strategy.maxNumberOfRobots = 300
         if(strategy.maxNumberOfRobots> 300)
             strategy.maxNumberOfRobots = 300
         strategyRepository.save(strategy)

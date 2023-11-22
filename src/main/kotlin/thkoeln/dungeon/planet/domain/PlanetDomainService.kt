@@ -52,9 +52,9 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
         planet.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
         planetRepository.save(planet)
     }
-    fun visitPlanet(planetId: UUID) {
-        val planet = planetRepository.findByPlanetId(planetId)
-            .orElseThrow { PlanetException("Planet with UUID $planetId not found!") }
+    fun visitPlanet(planet: Planet) {
+        /*val planet = planetRepository.findByPlanetId(planetId)
+            .orElseThrow { PlanetException("Planet with UUID $planetId not found!") }*/
         planet.visited = true
         planetRepository.save(planet)
     }
@@ -71,7 +71,8 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
 
     fun saveAll() {
         val allPlanets = planetRepository.findAll()
-        for (planet in allPlanets) planetRepository.save(planet)
+        //for (planet in allPlanets) planetRepository.save(planet)
+        planetRepository.saveAll(allPlanets)
     }
 
 

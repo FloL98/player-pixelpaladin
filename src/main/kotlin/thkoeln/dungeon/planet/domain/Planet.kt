@@ -20,6 +20,7 @@ import kotlin.jvm.Transient
 
 
 @Entity
+@Table(indexes = [Index(columnList = "planetId")])
 @JsonIgnoreProperties
 class Planet {
     @Id
@@ -27,10 +28,7 @@ class Planet {
     var id = UUID.randomUUID()
         private set
 
-    // this is the EXTERNAL id that we receive from MapService. We could use this also as our own id, but then
-    // we'll run into problems in case MapService messes up their ids. So, better we better keep these two apart.
     lateinit var planetId: UUID
-
 
 
     var isSpaceStation = false
@@ -188,7 +186,7 @@ class Planet {
     }
 
     fun allNeighbours(): Map<CompassDirection, Planet> {
-        val allNeighboursMap: MutableMap<CompassDirection, Planet> = HashMap()
+        val allNeighboursMap: MutableMap<CompassDirection, Planet> = EnumMap(CompassDirection::class.java)
         if (northNeighbour != null) allNeighboursMap[CompassDirection.NORTH] = northNeighbour!!
         if (westNeighbour != null) allNeighboursMap[CompassDirection.WEST] = westNeighbour!!
         if (eastNeighbour != null) allNeighboursMap[CompassDirection.EAST] = eastNeighbour!!

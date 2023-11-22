@@ -51,6 +51,7 @@ class Command {
         command.commandObject = CommandObject()
         command.commandObject.robotId = robotId
         command.commandObject.itemName = tradableItem.name
+        command.commandObject.itemQuantity = 1
         return command
     }
 

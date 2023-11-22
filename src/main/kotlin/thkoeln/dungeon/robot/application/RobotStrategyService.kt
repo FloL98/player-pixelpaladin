@@ -101,6 +101,7 @@ class RobotStrategyService@Autowired constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun executeCommandListParallel() {
+        logger.info("http command start")
         CoroutineScope(Dispatchers.IO).launch {
             val maxThreads = 3 + commandList.size / 75
             val robotCommandDispatcher = Dispatchers.IO.limitedParallelism(maxThreads)
@@ -111,7 +112,6 @@ class RobotStrategyService@Autowired constructor(
                 }
             }
         }
-
     }
 
     fun clearCommandList(){

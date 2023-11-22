@@ -14,7 +14,7 @@ class MinerActionStrategy(val gameWorld: GameWorld, val game: Game, val robot: R
 
 
     override fun getCommand(): Command? {
-        if(robot.energy < 3)
+        if(robot.energy < robot.planet.movementDifficulty.difficulty)
             return RefreshEnergyStrategy(gameWorld, this.game, this.robot, this.player, this.strategy).getCommand()
         else if(robot.inventory.full) {
             return FullInventoryStrategy(gameWorld, this.game, this.robot, this.player, this.strategy).getCommand()

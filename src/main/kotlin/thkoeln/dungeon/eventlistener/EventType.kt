@@ -33,10 +33,19 @@ enum class EventType(val stringValue: String) {
     UNKNOWN("UNKNOWN");
 
     val isRobotRelated: Boolean
-        get() = !(this == GAME_STATUS || this == BANK_INITIALIZED || this == BANK_CLEARED || this == UNKNOWN
-                || this == ROUND_STATUS || this == TRADABLE_PRICES || this == PLANET_DISCOVERED
-                || this == BANK_ACCOUNT_TRANSACTION_BOOKED ||this == ERROR)
+        get() = (this == ROBOT_HEALTH_UPDATED || this == ROBOT_MOVED || this == ROBOT_REGENERATED || this == ROBOT_RESOURCE_MINED
+                || this ==  ROBOT_RESOURCE_REMOVED || this == ROBOT_RESTORED_ATTRIBUTES || this == ROBOT_UPGRADED
+                || this ==  ROBOT_SPAWNED)
 
+    val isPlayerRelated: Boolean
+        get() = (this == BANK_INITIALIZED || this == BANK_CLEARED || this == BANK_ACCOUNT_TRANSACTION_BOOKED)
+
+    val isPlanetRelated: Boolean
+        get() = (this == RESOURCE_MINED)
+
+    val isNoCategoryYet: Boolean
+        get() = (this == ERROR || this == UNKNOWN || this == ROBOT_ATTACKED || this == ROBOTS_REVEALED
+                || this == PLANET_DISCOVERED || this == ROUND_STATUS || this == GAME_STATUS)
     companion object {
         @JvmStatic
         fun findByStringValue(stringValue: String): EventType {

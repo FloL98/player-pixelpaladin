@@ -11,8 +11,6 @@ import thkoeln.dungeon.player.domain.Player
 import thkoeln.dungeon.restadapter.GameServiceRESTAdapter
 import thkoeln.dungeon.robot.domain.Robot
 import thkoeln.dungeon.robot.domain.RobotJob
-import thkoeln.dungeon.robot.domain.robotactionstrategies.FighterActionStrategy
-import thkoeln.dungeon.robot.domain.robotactionstrategies.MinerActionStrategy
 import thkoeln.dungeon.strategy.application.StrategyService
 
 @Service
@@ -50,6 +48,21 @@ class TestServiceRobotStrategy@Autowired constructor(
             return null
     }
 
+    fun testFarmStrategyFor(robot: Robot, player: Player): Command?{
+        if (robot.canFarmOnCurrentPlanet() && robot.hasSuitableJobForResource(robot.planet.mineableResource?.resourceType!!))
+            return Command().createMiningCommand(player.playerId!!, robot.robotId)
+        else
+            return null
+    }
+
+    fun testMoveStrategyFor(robot: Robot, player: Player): Command?{
+        val planetToMoveTo = robotApplicationService.findPlanetToMoveTo(robot)
+        if(planetToMoveTo!= null)
+            return Command().createMoveCommand(robot.robotId, planetToMoveTo.planetId, player.playerId!!)
+        else
+            return null
+    }
+
 
 
     private fun findOptimalRobotAction(robot: Robot, player: Player, currentGame: Game): Command?{
@@ -58,13 +71,18 @@ class TestServiceRobotStrategy@Autowired constructor(
             testRefreshEnergyStratgyFor(robot,player)?.let { return it }
             testAttackStrategyFor(robot,player)?.let { return it }
             testFullInventoryStrategyFor(robot,player)?.let { return it }
+            testMoveStrategyFor(robot,player)?.let { return it }
         }
         else if (robot.job.isMiner()) {
             testRefreshEnergyStratgyFor(robot, player)?.let { return it }
             testFullInventoryStrategyFor(robot, player)?.let { return it }
             testAttackStrategyFor(robot, player)?.let { return it }
+            testMoveStrategyFor(robot,player)?.let { return it }
         }
         return null
     }
+
+
+
 
 }

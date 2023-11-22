@@ -11,5 +11,7 @@ interface RobotRepository : CrudRepository<Robot, UUID> {
 
     fun removeRobotByRobotId(robotId: UUID)
 
+    fun removeRobotByAlive(alive: Boolean)
+
     fun findByJob(robotJob: RobotJob):List<Robot>
 }
