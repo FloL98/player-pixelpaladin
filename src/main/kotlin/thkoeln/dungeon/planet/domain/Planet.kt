@@ -151,14 +151,6 @@ class Planet {
         southNeighbour = null
     }
 
-    fun getNeighbour1(compassDirection: CompassDirection): Planet?{
-        return when(compassDirection){
-            CompassDirection.NORTH-> this.northNeighbour
-            CompassDirection.EAST-> this.eastNeighbour
-            CompassDirection.SOUTH-> this.southNeighbour
-            CompassDirection.WEST-> this.westNeighbour
-        }
-    }
 
     fun getNeighbour(compassDirection: CompassDirection?): Planet? {
         return try {
@@ -194,6 +186,15 @@ class Planet {
         return allNeighboursMap
     }
 
+    fun getAllNeighborsAsList(): List<Planet>{
+        val neighbors = ArrayList<Planet>()
+        for(direction in CompassDirection.entries) {
+            if(this.getNeighbour(direction) != null)
+                neighbors.add(this.getNeighbour(direction)!!)
+        }
+        return neighbors
+    }
+
     /**
      * Add the neighbours to an existing 2d array of planets - grow the array if needed.
      * @param existingLocalIsland
@@ -216,19 +217,6 @@ class Planet {
         return localIsland
     }
 
-    override fun equals(o: Any?): Boolean {
-        if (this === o) return true
-        if (o !is Planet) return false
-        return id == o.id
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(id)
-    }
-
-    override fun toString(): String {
-        return name ?: ("S: " + isSpaceStation + ", " + planetId)
-    }
 
     companion object {
         fun fromDto(planetShortDto: PlanetShortDto): Planet {
@@ -237,6 +225,15 @@ class Planet {
             planet._resourceType = planetShortDto.resourceType
             planet.movementDifficulty = MovementDifficulty.fromInteger(planetShortDto.movementDifficulty)
             planet.gameWorldId = planetShortDto.gameWorldId
+            return planet
+        }
+
+        fun fromPlanetIdAndMovementDifficultyAndResource(planetId: UUID, movementDifficulty: Int, resource: MineableResource?): Planet{
+            val planet = Planet()
+            planet.planetId = planetId
+            planet.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
+            planet.mineableResource = resource
+            planet._resourceType = resource?.resourceType
             return planet
         }
     }

@@ -73,29 +73,34 @@ class StrategyService@Autowired constructor(
             else -> throw StrategyException("Round number cannot be negative!")
         }
         //Policy soll verringert werden, wenn zu wenig Robots da sind, damit mehr Budget für Robots zur Verfügung stehen
-        val policyPenalty = calculatePolicyPenalty(strategy.maxNumberOfRobots, currentNumberOfRobots)
+        val policyPenalty = calculatePolicyPenalty(strategy.maxNumberOfRobots, currentNumberOfRobots, currentRound)
         strategy.gamePolicy = Policy.fromInt(strategy.gamePolicy.ordinal - policyPenalty)
         strategyRepository.save(strategy)
         logger.info("Lowered policy by: $policyPenalty.($currentNumberOfRobots/${strategy.maxNumberOfRobots}) Robots!")
         logger.info("Current Policy: ${strategy.gamePolicy.name}")
     }
 
-    private fun calculatePolicyPenalty(maxNumberOfRobots: Int, currentNumberOfRobots: Int): Int{
+    private fun calculatePolicyPenalty(maxNumberOfRobots: Int, currentNumberOfRobots: Int, currentRound: Int): Int{
         if(currentNumberOfRobots == 0)
-            return 0
-        val quotient = maxNumberOfRobots.toDouble()/currentNumberOfRobots.toDouble()
+            return 5
+        /*val quotient = maxNumberOfRobots.toDouble()/currentNumberOfRobots.toDouble()
         if(quotient < 1.2)
             return 0
-        return quotient.toInt()
+        return quotient.toInt()*/
+        val quotient = (currentRound.toDouble()*0.5) / currentNumberOfRobots.toDouble()
+        if(quotient <= 1)
+            return 0
+        else
+            return quotient.toInt()
     }
 
     private fun updateMaxNumberOfRobots(strategy: Strategy){
         var currentRound = strategy.game?.currentRoundNumber!!
         //strategy.maxNumberOfRobots = 5 + (currentRound/2)
         //testweise die maxnumber auf 300
-        strategy.maxNumberOfRobots = 300
-        if(strategy.maxNumberOfRobots> 300)
-            strategy.maxNumberOfRobots = 300
+        strategy.maxNumberOfRobots = 150
+        if(strategy.maxNumberOfRobots> 150)
+            strategy.maxNumberOfRobots = 150
         strategyRepository.save(strategy)
     }
 

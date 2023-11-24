@@ -5,6 +5,7 @@ import thkoeln.dungeon.strategy.application.StrategyService
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import thkoeln.dungeon.domainprimitives.*
 import thkoeln.dungeon.game.domain.Game
 import thkoeln.dungeon.planet.application.PlanetApplicationService
@@ -45,7 +46,9 @@ class RobotApplicationService@Autowired constructor(
     }
 
     fun findRobotByRobotId(robotId: UUID): Robot?{
+        logger.info("find robot start")
         val robot = robotRepository.findByRobotId(robotId)
+        logger.info("find robot end")
         return if(robot.isPresent)
             robot.get()
         else null
@@ -172,30 +175,29 @@ class RobotApplicationService@Autowired constructor(
         sollen unvisited planets bevorzugt werden
      */
     fun findCoalPlanetOrLikeliestToContainCoalToMoveTo(robot: Robot): Planet?{
-        if(MineableResourceType.COAL == robot.planet._resourceType)
+        if(MineableResourceType.COAL == robot.planet.mineableResource?.resourceType)
             return null
         val possibleNeighbours = robot.getAllNeighbourPlanets()
+        if(possibleNeighbours.size == 0)
+            return null
+        if(possibleNeighbours.size == 1)
+            return possibleNeighbours.first()
+
         for(neighbour in possibleNeighbours){
-            if(MineableResourceType.COAL== neighbour._resourceType)
+            if(MineableResourceType.COAL== neighbour.mineableResource?.resourceType)
                 return neighbour
         }
         if(robot.moveHistory.isNotEmpty()) {
-            val lastVisitedPlanet = planetApplicationService.findByPlanetId(robot.moveHistory.last())
-            if (possibleNeighbours.size == 1)
-                return lastVisitedPlanet
-            else
-                possibleNeighbours.remove(lastVisitedPlanet)
+            possibleNeighbours.removeIf{robot.moveHistory.last == it.planetId}
         }
+
         val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.hasBeenVisited() }
             .sortedBy{it.movementDifficulty.difficulty}
         if(unvisitedPossibleNeighbours.isNotEmpty()) {
             return unvisitedPossibleNeighbours.first
         }
         else {
-            return if (possibleNeighbours.isNotEmpty())
-                possibleNeighbours.sortedBy{it.movementDifficulty.difficulty}[0]
-            else
-                null
+            return possibleNeighbours.sortedBy{it.movementDifficulty.difficulty}[0]
         }
     }
 
@@ -286,6 +288,7 @@ class RobotApplicationService@Autowired constructor(
         return enemyRobotRepository.findAll().toList()
     }
 
+    @Transactional
     fun removeAllDeadRobots(){
         robotRepository.removeRobotByAlive(false)
         enemyRobotRepository.removeRobotByAlive(false)

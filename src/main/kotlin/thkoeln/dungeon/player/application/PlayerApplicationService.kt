@@ -1,6 +1,8 @@
 package thkoeln.dungeon.player.application
 
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
@@ -9,6 +11,7 @@ import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.*
 import thkoeln.dungeon.eventlistener.concreteevents.BankAccountTransactionBookedEvent
 import thkoeln.dungeon.eventlistener.concreteevents.BankClearedEvent
@@ -37,6 +40,7 @@ class PlayerApplicationService @Autowired constructor(
     private val robotApplicationService: RobotApplicationService,
     private val strategyService: StrategyService,
     private val robotStrategyService: RobotStrategyService,
+    private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(PlayerApplicationService::class.java)
     private val modelMapper = ModelMapper()
@@ -126,22 +130,25 @@ class PlayerApplicationService @Autowired constructor(
 
 
     fun handleBankInitializedEvent(event: BankInitializedEvent){
-        adjustBankAccount( event.balance!!)
+        adjustBankAccount(event.balance)
     }
 
     fun handleBankClearedEvent(event: BankClearedEvent){
         adjustBankAccount(0)
     }
 
-    fun handleBankAccountTransactionBookedEvent(event: BankAccountTransactionBookedEvent){
-        addToBankAccount(event.transactionAmount!!)
+    suspend fun handleBankAccountTransactionBookedEvent(event: BankAccountTransactionBookedEvent){
+        val playerMutex = entityLockService.playerLock
+        playerMutex.withLock {
+            addToBankAccount(event.transactionAmount)
+        }
     }
 
     private fun addToBankAccount(amount: Int){
         logger.info("Added to bank account $amount")
         val player = queryAndIfNeededCreatePlayer()
-        val newMoney = Moneten.fromInteger((amount+ player.moneten.amount))
-        player.moneten = newMoney
+        //val newMoney = Moneten.fromInteger((amount+ player.moneten.amount))
+        player.moneten = player.moneten.increaseBy(amount)//newMoney
         playerRepository.save(player)
     }
 

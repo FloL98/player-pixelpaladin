@@ -4,28 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="initial fixes">
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="updates to functioning player - no parallel event handling">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Command.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Command.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/helm-chart/Chart.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/helm-chart/Chart.yaml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/EventType.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/EventType.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/eventdtos/RevealedRobotDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/eventdtos/RevealedRobotDto.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/ShortestPathCalculator.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/ShortestPathCalculator.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/TestServiceRobotStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/TestServiceRobotStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobot.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/RobotRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/RobotRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterActionStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterActionStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerActionStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerActionStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/UpgradeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/UpgradeStrategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,8 +36,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Class" />
-        <option value="Kotlin Interface" />
         <option value="Kotlin File" />
+        <option value="Kotlin Interface" />
         <option value="Kotlin Class" />
       </list>
     </option>
@@ -80,6 +80,7 @@
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
     &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.35172415&quot;,
@@ -160,7 +161,11 @@
       <workItem from="1700217868763" duration="25872000" />
       <workItem from="1700483825272" duration="18137000" />
       <workItem from="1700573553175" duration="16948000" />
-      <workItem from="1700649033234" duration="3669000" />
+      <workItem from="1700649033234" duration="29410000" />
+      <workItem from="1700728760656" duration="2968000" />
+      <workItem from="1700748260281" duration="21540000" />
+      <workItem from="1700779729670" duration="4295000" />
+      <workItem from="1700821037090" duration="2784000" />
     </task>
     <task id="LOCAL-00001" summary="initial fixes">
       <option name="closed" value="true" />
@@ -170,7 +175,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700142511915</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="updates to functioning player - no parallel event handling">
+      <option name="closed" value="true" />
+      <created>1700666329210</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1700666329210</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -189,7 +202,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="initial fixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="initial fixes" />
+    <MESSAGE value="updates to functioning player - no parallel event handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="updates to functioning player - no parallel event handling" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

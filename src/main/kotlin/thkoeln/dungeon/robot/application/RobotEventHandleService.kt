@@ -3,10 +3,12 @@ package thkoeln.dungeon.robot.application
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.MovementDifficulty
 import thkoeln.dungeon.domainprimitives.UpgradeType
 import thkoeln.dungeon.eventlistener.concreteevents.*
@@ -29,6 +31,7 @@ class RobotEventHandleService @Autowired constructor(
     private val enemyRobotRepository: EnemyRobotRepository,
     private val planetApplicationService: PlanetApplicationService,
     private val planetDomainService: PlanetDomainService,
+    private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(GameServiceRESTAdapter::class.java)
     private var modelMapper = ModelMapper()
@@ -53,29 +56,37 @@ class RobotEventHandleService @Autowired constructor(
 
 
 
-    fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
+    suspend fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
         changeRobotHealthToAmount(robotHealthUpdatedEvent.robotId, robotHealthUpdatedEvent.health)
     }
 
-    private fun changeRobotHealthToAmount(robotId: UUID, healthAmount: Int){
-        val robot = robotRepository.findByRobotId(robotId)
-            .orElseThrow { RobotApplicationException("Couldnt change robot health because robot doesnt exist") }
-        robot.health = healthAmount
-        robotRepository.save(robot)
-        logger.info("Robot $robot successfully changed his energy to $healthAmount!")
+    private suspend fun changeRobotHealthToAmount(robotId: UUID, healthAmount: Int){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotId) { Mutex() }
+
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotId)
+                .orElseThrow { RobotApplicationException("Couldnt change robot health because robot doesnt exist") }
+            robot.health = healthAmount
+            robotRepository.save(robot)
+            logger.info("Robot $robot successfully changed his energy to $healthAmount!")
+        }
+
     }
 
 
-    fun handleRobotMovedIntegrationEvent(robotMovedEvent: RobotMovedEvent){
-        val robot = robotRepository.findByRobotId(robotMovedEvent.robotId)
-            .orElseThrow {RobotApplicationException("Couldnt change robot position because robot doesnt exist")}
-        val newPlanetPosition = planetApplicationService.findByPlanetId(robotMovedEvent.toPlanet.planetId)
-        robot.planet = newPlanetPosition
-        robot.energy = robotMovedEvent.remainingEnergy
-        planetDomainService.visitPlanet(newPlanetPosition)
-        robot.moveHistory.add(robotMovedEvent.fromPlanet.planetId)
+    suspend fun handleRobotMovedIntegrationEvent(robotMovedEvent: RobotMovedEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotMovedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotMovedEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt change robot position because robot doesnt exist") }
+            val newPlanetPosition = planetApplicationService.findByPlanetId(robotMovedEvent.toPlanet.planetId)
+            robot.planet = newPlanetPosition
+            robot.energy = robotMovedEvent.remainingEnergy
+            planetDomainService.visitPlanet(newPlanetPosition)
+            robot.moveHistory.add(robotMovedEvent.fromPlanet.planetId)
 
-        robotRepository.save(robot)
+            robotRepository.save(robot)
+        }
         //logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
     }
 
@@ -155,90 +166,131 @@ class RobotEventHandleService @Autowired constructor(
             }
         }*/
     }
-    fun handleRobotUpgradedIntegrationEvent(robotUpgradedEvent: RobotUpgradedEvent){
-        val robot = robotRepository.findByRobotId(robotUpgradedEvent.robotId)
-            .orElseThrow { RobotApplicationException("Couldnt upgrade robot because robot doesnt exist") }
-        /*hier eventuell bessere Lösung möglich als jedes Attribut einzeln abzufragen?
-        oder einfach  modelMapper.map(robotUpgradedIntegrationEvent.robot, robot) //außer id
-        needs to be fixed*/
-        when(robotUpgradedEvent.upgradeType){
-            UpgradeType.STORAGE -> {robot.inventory.storageLevel = robotUpgradedEvent.level
-                robot.inventory.maxStorage = robotUpgradedEvent.robot.inventory.maxStorage
+    suspend fun handleRobotUpgradedIntegrationEvent(robotUpgradedEvent: RobotUpgradedEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotUpgradedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotUpgradedEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt upgrade robot because robot doesnt exist") }
+            /*hier eventuell bessere Lösung möglich als jedes Attribut einzeln abzufragen?
+            oder einfach  modelMapper.map(robotUpgradedIntegrationEvent.robot, robot) //außer id
+            needs to be fixed*/
+            when (robotUpgradedEvent.upgradeType) {
+                UpgradeType.STORAGE -> {
+                    robot.inventory.storageLevel = robotUpgradedEvent.level
+                    robot.inventory.maxStorage = robotUpgradedEvent.robot.inventory.maxStorage
+                }
+
+                UpgradeType.HEALTH -> {
+                    robot.healthLevel = robotUpgradedEvent.level
+                    robot.health = robotUpgradedEvent.robot.health
+                }
+
+                UpgradeType.DAMAGE -> {
+                    robot.damageLevel = robotUpgradedEvent.level
+                    robot.attackDamage = robotUpgradedEvent.robot.attackDamage
+                }
+
+                UpgradeType.MINING_SPEED -> {
+                    robot.miningSpeedLevel = robotUpgradedEvent.level
+                    robot.miningSpeed = robotUpgradedEvent.robot.miningSpeed
+                }
+
+                UpgradeType.MINING -> {
+                    robot.miningLevel = robotUpgradedEvent.level
+                }
+
+                UpgradeType.MAX_ENERGY -> {
+                    robot.energyLevel = robotUpgradedEvent.level
+                    robot.maxEnergy = robotUpgradedEvent.robot.maxEnergy
+                }
+
+                UpgradeType.ENERGY_REGEN -> {
+                    robot.energyRegenLevel = robotUpgradedEvent.level
+                    robot.energyRegen = robotUpgradedEvent.robot.energyRegen
+                }
+
+                else -> {
+                    logger.info("Couldnt find a suitable type to upgrade robot!")
+                }
             }
-            UpgradeType.HEALTH -> {
-                robot.healthLevel = robotUpgradedEvent.level
-                robot.health = robotUpgradedEvent.robot.health
-            }
-            UpgradeType.DAMAGE -> {
-                robot.damageLevel = robotUpgradedEvent.level
-                robot.attackDamage = robotUpgradedEvent.robot.attackDamage
-            }
-            UpgradeType.MINING_SPEED -> {
-                robot.miningSpeedLevel = robotUpgradedEvent.level
-                robot.miningSpeed = robotUpgradedEvent.robot.miningSpeed
-            }
-            UpgradeType.MINING -> {
-                robot.miningLevel = robotUpgradedEvent.level
-            }
-            UpgradeType.MAX_ENERGY -> {
-                robot.energyLevel = robotUpgradedEvent.level
-                robot.maxEnergy = robotUpgradedEvent.robot.maxEnergy
-            }
-            UpgradeType.ENERGY_REGEN -> {
-                robot.energyRegenLevel = robotUpgradedEvent.level
-                robot.energyRegen = robotUpgradedEvent.robot.energyRegen
-            }
-            else -> {
-                logger.info("Couldnt find a suitable type to upgrade robot!")
+            robotRepository.save(robot)
+            logger.info("Upgraded robots ${robotUpgradedEvent.upgradeType} to level ${robotUpgradedEvent.level}!")
+        }
+    }
+    suspend fun handleRobotRegeneratedIntegrationEvent(robotRegeneratedEvent: RobotRegeneratedEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotRegeneratedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotRegeneratedEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt change robot energy because robot doesnt exist") }
+            robot.energy = robotRegeneratedEvent.availableEnergy
+            robotRepository.save(robot)
+        }
+    }
+    suspend fun handleRobotResourceMinedIntegrationEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceMinedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            logger.info("find robot start")
+            val robot = robotRepository.findByRobotId(robotResourceMinedEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt add to robot inventory because robot doesnt exist!") }
+            logger.info("find robot end")
+            robot.inventory.resources = robotResourceMinedEvent.resourceInventory
+            logger.info("save robot start")
+            robotRepository.save(robot)
+            logger.info("save robot end")
+        }
+    }
+    suspend fun handleRobotResourceRemovedIntegrationEvent(robotResourceRemovedEvent: RobotResourceRemovedEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceRemovedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotResourceRemovedEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt remove from robot inventory because robot doesnt exist!") }
+            robot.inventory.resources = robotResourceRemovedEvent.resourceInventory
+            robotRepository.save(robot)
+            logger.info("change resources ${robotResourceRemovedEvent.removedResource}")
+        }
+    }
+    suspend fun handleRobotRestoredAttributesIntegrationEvent(robotRestoredAttributesEvent: RobotRestoredAttributesEvent){
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotRestoredAttributesEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findByRobotId(robotRestoredAttributesEvent.robotId)
+                .orElseThrow { RobotApplicationException("Couldnt restore robot attribute because robot doesnt exist") }
+            robot.energy = robotRestoredAttributesEvent.availableEnergy
+            robot.health = robotRestoredAttributesEvent.availableHealth
+            robotRepository.save(robot)
+            logger.info("Robot $robot successfully restored his energy to ${robotRestoredAttributesEvent.availableEnergy}! or health to ${robotRestoredAttributesEvent.availableHealth}")
+        }
+    }
+    suspend fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
+        //planet mutex?
+        val planetMutex = entityLockService.planetLocks.computeIfAbsent(robotSpawnedEvent.robotDto.planetShortDto.planetId) { Mutex() }
+        planetMutex.withLock {
+            val planetOpt =
+                planetApplicationService.findByPlanetIdOpt(robotSpawnedEvent.robotDto.planetShortDto.planetId)
+            val planet: Planet
+            val mapper = ObjectMapper()
+            if (planetOpt.isEmpty) {
+                planet = mapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
+                planet.movementDifficulty =
+                    MovementDifficulty.fromInteger(robotSpawnedEvent.robotDto.planetShortDto.movementDifficulty)
+                planetApplicationService.registerPlanetIfNotExists(planet)
+            } else
+                planet = planetOpt.get()
+
+            /*val mapper = ObjectMapper()
+        val planet = mapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
+
+        planet.movementDifficulty = MovementDifficulty.fromInteger(robotSpawnedEvent.robotDto.planetShortDto.movementDifficulty)*/
+
+
+            //planetApplicationService.registerPlanetIfNotExists(planet)
+            val robotMutex = entityLockService.robotLocks.computeIfAbsent(robotSpawnedEvent.robotDto.robotId) { Mutex() }
+            robotMutex.withLock {
+                val newRobot = mapper.convertValue(robotSpawnedEvent.robotDto, Robot::class.java)
+                newRobot.planet = planet//planetApplicationService.findByPlanetId(robotSpawnedEvent.robotDto.planetShortDto.planetId)
+                robotRepository.save(newRobot)
+                logger.info("Robot $newRobot successfully registered!")
             }
         }
-        robotRepository.save(robot)
-        logger.info("Upgraded robots ${robotUpgradedEvent.upgradeType} to level ${robotUpgradedEvent.level}!" )
-    }
-    fun handleRobotRegeneratedIntegrationEvent(robotRegeneratedEvent: RobotRegeneratedEvent){
-        val robot = robotRepository.findByRobotId(robotRegeneratedEvent.robotId)
-            .orElseThrow {RobotApplicationException("Couldnt change robot energy because robot doesnt exist")}
-        robot.energy = robotRegeneratedEvent.availableEnergy
-        robotRepository.save(robot)
-    }
-    fun handleRobotResourceMinedIntegrationEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
-        val robot = robotRepository.findByRobotId(robotResourceMinedEvent.robotId)
-            .orElseThrow{ RobotApplicationException("Couldnt add to robot inventory because robot doesnt exist!") }
-        robot.inventory.resources = robotResourceMinedEvent.resourceInventory
-        robotRepository.save(robot)
-    }
-    fun handleRobotResourceRemovedIntegrationEvent(robotResourceRemovedEvent: RobotResourceRemovedEvent){
-        val robot = robotRepository.findByRobotId(robotResourceRemovedEvent.robotId)
-            .orElseThrow{ RobotApplicationException("Couldnt remove from robot inventory because robot doesnt exist!") }
-        robot.inventory.resources = robotResourceRemovedEvent.resourceInventory
-        robotRepository.save(robot)
-        logger.info("change resources ${robotResourceRemovedEvent.removedResource}")
-    }
-    fun handleRobotRestoredAttributesIntegrationEvent(robotRestoredAttributesEvent: RobotRestoredAttributesEvent){
-        val robot = robotRepository.findByRobotId(robotRestoredAttributesEvent.robotId)
-            .orElseThrow {RobotApplicationException("Couldnt restore robot attribute because robot doesnt exist")}
-        robot.energy = robotRestoredAttributesEvent.availableEnergy
-        robot.health = robotRestoredAttributesEvent.availableHealth
-        robotRepository.save(robot)
-        logger.info("Robot $robot successfully restored his energy to ${robotRestoredAttributesEvent.availableEnergy}! or health to ${robotRestoredAttributesEvent.availableHealth}")
-    }
-    fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
-        val mapper = ObjectMapper()
-        val planet = mapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
-        //val planet = Planet.fromDto(robotSpawnedIntegrationEvent.robotDto.planetShortDto)//robotSpawnedIntegrationEvent.robotDto.planetDto.convertToPlanet() /*Planet()
-        planet.movementDifficulty = MovementDifficulty.fromInteger(robotSpawnedEvent.robotDto.planetShortDto.movementDifficulty)
-        //modelMapper.map(robotSpawnedIntegrationEvent.robot.planet, planet)
-        planetApplicationService.registerPlanetIfNotExists(planet)
-
-
-        val newRobot= mapper.convertValue(robotSpawnedEvent.robotDto, Robot::class.java)
-
-
-        //val newRobot1 = Robot()
-        //mapper.map(robotSpawnedIntegrationEvent.robotDto, newRobot)
-        newRobot.planet = planetApplicationService.findByPlanetId(robotSpawnedEvent.robotDto.planetShortDto.planetId)
-        robotRepository.save(newRobot)
-        logger.info("Robot $newRobot successfully registered!")
     }
 
 }

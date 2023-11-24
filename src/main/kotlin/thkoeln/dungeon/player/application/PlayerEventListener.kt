@@ -1,6 +1,7 @@
 package thkoeln.dungeon.player.application
 
 
+import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -54,6 +55,8 @@ class PlayerEventListener @Autowired constructor(
     //this attribute is used to synchronize started-event and robotsRevealedEvent to send commands after these two happended
     private var commandLatch = CountDownLatch(2)
 
+    val coroutineScope = CoroutineScope(Dispatchers.Default)
+
     /**
      * Listener to all events that the core services send to the player
      * @param eventIdStr
@@ -64,6 +67,7 @@ class PlayerEventListener @Autowired constructor(
      * @param timestampStr
      * @param payload
      */
+
     @RabbitListener(queues = ["player-\${dungeon.playerName}"])
     fun receiveEvent(
         @Header(defaultValue = "", value = EventHeader.EVENT_ID_KEY) eventIdStr: String?,
@@ -76,47 +80,64 @@ class PlayerEventListener @Autowired constructor(
         message: Message
     ) {
 
-        //if(type == "RoundStatus" ||type =="RobotsRevealed") {
+            //if(type == "RoundStatus" ||type =="RobotsRevealed") {
             logger.info(
                 """${environment.getProperty("ANSI_BLUE")}====> received event ... 
 	 {type=$type, eventId=$eventIdStr, transactionId=$transactionIdStr, playerId=$playerIdStr, version=$version, timestamp=${timestampStr}
 	$payload${environment.getProperty("ANSI_RESET")}"""
             )
-        //}
+            //}
 
 
-        val eventHeader = EventHeader(type, eventIdStr, playerIdStr, transactionIdStr, timestampStr, version)
-        val newEvent = eventFactory.fromHeaderAndPayload(eventHeader, payload)
-        if (!newEvent.isValid) {
-            logger.error("Event invalid: $newEvent")
-            return
-        }
-        if (eventHeader.eventType.isRobotRelated) {
-            // todo that will come later
-        }
-        if(playerIdStr == "public" || playerIdStr == playerApplicationService.queryAndIfNeededCreatePlayer().playerId.toString())
-            handlePlayerRelatedEvent(newEvent)
+            val eventHeader = EventHeader(type, eventIdStr, playerIdStr, transactionIdStr, timestampStr, version)
+            val newEvent = eventFactory.fromHeaderAndPayload(eventHeader, payload)
+            if (!newEvent.isValid) {
+                logger.error("Event invalid: $newEvent")
+                return
+            }
+
+
+
+            if (playerIdStr == "public" || playerIdStr == playerApplicationService.queryAndIfNeededCreatePlayer().playerId.toString()) {
+                if (eventHeader.eventType.isRobotRelated) {
+                    coroutineScope.launch {
+                        logger.info("coroutine start")
+                        handleRobotRelatedEvent(newEvent)
+                        logger.info("coroutine end")
+                    }
+                }
+                else if(eventHeader.eventType.isPlanetRelated){
+                    coroutineScope.launch {
+                        logger.info("coroutine start")
+                        handlePlanetRelatedEvent(newEvent)
+                        logger.info("coroutine end")
+                    }
+                }
+                else if(eventHeader.eventType == EventType.BANK_ACCOUNT_TRANSACTION_BOOKED){
+                    coroutineScope.launch {
+                        //logger.info("coroutine start")
+                        handleOtherEventParallel(newEvent)
+                        //logger.info("coroutine end")
+                    }
+                }
+                else {
+
+                    runBlocking {
+                        coroutineScope.coroutineContext.job.children.forEach { it.join() }
+                    }
+                    //logger.info("start")
+                    handleOtherEvent(newEvent)
+                    //logger.info("end")
+                }
+            }
+
     }
 
-
-    /**
-     * Dispatch to the appropriate application service method
-     * @param event
-     */
-    private fun handlePlayerRelatedEvent(event: AbstractEvent?) {
-
+    private suspend fun handleRobotRelatedEvent(event: AbstractEvent){
         if(gameApplicationService.queryRunningGame().isPresent) {
-            when (event?.eventHeader?.eventType) {
-                EventType.BANK_INITIALIZED -> handleBankInitializedEvent(event as BankInitializedEvent)
-                EventType.ROUND_STATUS -> handleRoundStatusEvent(event as RoundStatusEvent)
-                EventType.TRADABLE_PRICES -> handleTradablePricesEvent(event as TradablePricesEvent)
+            when (event.eventHeader?.eventType) {
                 EventType.ROBOT_SPAWNED -> handleRobotSpawnedIntegrationEvent(event as RobotSpawnedEvent)
-                EventType.ROBOTS_REVEALED -> handleRobotsRevealedEvent(event as RobotsRevealedEvent)
-                EventType.PLANET_DISCOVERED -> handlePlanetDiscoveredEvent(event as PlanetDiscoveredEvent)
-                EventType.BANK_ACCOUNT_TRANSACTION_BOOKED -> handleBankAccountTransactionBookedEvent(event as BankAccountTransactionBookedEvent)
-                EventType.RESOURCE_MINED -> handleResourceMinedEvent(event as ResourceMinedEvent)
                 EventType.ROBOT_HEALTH_UPDATED -> handleRobotHealthUpdatedEvent(event as RobotHealthUpdatedEvent)
-                EventType.ROBOT_ATTACKED -> handleRobotAttackedIntegrationEvent(event as RobotAttackedEvent)
                 EventType.ROBOT_MOVED -> handleRobotMovedIntegrationEvent(event as RobotMovedEvent)
                 EventType.ROBOT_UPGRADED -> handleRobotUpgradedIntegrationEvent(event as RobotUpgradedEvent)
                 EventType.ROBOT_REGENERATED -> handleRobotRegeneratedIntegrationEvent(event as RobotRegeneratedEvent)
@@ -128,55 +149,107 @@ class PlayerEventListener @Autowired constructor(
 
             }
         }
+    }
+
+    private suspend fun handlePlanetRelatedEvent(event: AbstractEvent){
+        if(gameApplicationService.queryRunningGame().isPresent) {
+            when (event.eventHeader?.eventType) {
+                EventType.RESOURCE_MINED -> handleResourceMinedEvent(event as ResourceMinedEvent)
+                EventType.PLANET_DISCOVERED -> handlePlanetDiscoveredEvent(event as PlanetDiscoveredEvent)
+                else -> {
+                }
+
+            }
+        }
+    }
+
+    private suspend fun handleOtherEventParallel(event: AbstractEvent){
+        if(gameApplicationService.queryRunningGame().isPresent) {
+            when (event.eventHeader?.eventType) {
+                EventType.BANK_ACCOUNT_TRANSACTION_BOOKED -> handleBankAccountTransactionBookedEvent(event as BankAccountTransactionBookedEvent)
+                else -> {
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Dispatch to the appropriate application service method
+     * @param event
+     */
+    private fun handleOtherEvent(event: AbstractEvent?) {
+
+        if(gameApplicationService.queryRunningGame().isPresent) {
+            when (event?.eventHeader?.eventType) {
+                EventType.BANK_INITIALIZED -> handleBankInitializedEvent(event as BankInitializedEvent)
+                EventType.ROUND_STATUS -> handleRoundStatusEvent(event as RoundStatusEvent)
+                EventType.TRADABLE_PRICES -> handleTradablePricesEvent(event as TradablePricesEvent)
+                //EventType.ROBOT_SPAWNED -> handleRobotSpawnedIntegrationEvent(event as RobotSpawnedEvent)
+                EventType.ROBOTS_REVEALED -> handleRobotsRevealedEvent(event as RobotsRevealedEvent)
+                //EventType.PLANET_DISCOVERED -> handlePlanetDiscoveredEvent(event as PlanetDiscoveredEvent)
+                //EventType.BANK_ACCOUNT_TRANSACTION_BOOKED -> handleBankAccountTransactionBookedEvent(event as BankAccountTransactionBookedEvent)
+                //EventType.RESOURCE_MINED -> handleResourceMinedEvent(event as ResourceMinedEvent)
+                //EventType.ROBOT_HEALTH_UPDATED -> handleRobotHealthUpdatedEvent(event as RobotHealthUpdatedEvent)
+                EventType.ROBOT_ATTACKED -> handleRobotAttackedIntegrationEvent(event as RobotAttackedEvent)
+                //EventType.ROBOT_MOVED -> handleRobotMovedIntegrationEvent(event as RobotMovedEvent)
+                //EventType.ROBOT_UPGRADED -> handleRobotUpgradedIntegrationEvent(event as RobotUpgradedEvent)
+                //EventType.ROBOT_REGENERATED -> handleRobotRegeneratedIntegrationEvent(event as RobotRegeneratedEvent)
+                //EventType.ROBOT_RESOURCE_MINED -> handleRobotResourceMinedIntegrationEvent(event as RobotResourceMinedEvent)
+                //EventType.ROBOT_RESOURCE_REMOVED -> handleRobotResourceRemovedIntegrationEvent(event as RobotResourceRemovedEvent)
+                //EventType.ROBOT_RESTORED_ATTRIBUTES -> handleRobotRestoredAttributesIntegrationEvent(event as RobotRestoredAttributesEvent)
+                else -> {
+                }
+
+            }
+        }
         when (event?.eventHeader?.eventType) {
             EventType.GAME_STATUS -> handleGameStatusEvent(event as GameStatusEvent)
             EventType.BANK_CLEARED -> handleBankClearedEvent(event as BankClearedEvent)
             else ->{}
         }
-
-
     }
 
-    private fun handleRobotMovedIntegrationEvent(event: RobotMovedEvent){
+    private suspend fun handleRobotMovedIntegrationEvent(event: RobotMovedEvent){
         robotEventHandleService.handleRobotMovedIntegrationEvent(event)
     }
     private fun handleRobotAttackedIntegrationEvent(event: RobotAttackedEvent){
         robotEventHandleService.handleRobotAttackedIntegrationEvent(event)
     }
-    private fun handleRobotUpgradedIntegrationEvent(event: RobotUpgradedEvent){
+    private suspend fun handleRobotUpgradedIntegrationEvent(event: RobotUpgradedEvent){
         robotEventHandleService.handleRobotUpgradedIntegrationEvent(event)
     }
-    private fun handleRobotRegeneratedIntegrationEvent(event: RobotRegeneratedEvent){
+    private suspend fun handleRobotRegeneratedIntegrationEvent(event: RobotRegeneratedEvent){
         robotEventHandleService.handleRobotRegeneratedIntegrationEvent(event)
     }
-    private fun handleRobotResourceMinedIntegrationEvent(event: RobotResourceMinedEvent){
+    private suspend fun handleRobotResourceMinedIntegrationEvent(event: RobotResourceMinedEvent){
         robotEventHandleService.handleRobotResourceMinedIntegrationEvent(event)
     }
-    private fun handleRobotResourceRemovedIntegrationEvent(event: RobotResourceRemovedEvent){
+    private suspend fun handleRobotResourceRemovedIntegrationEvent(event: RobotResourceRemovedEvent){
         robotEventHandleService.handleRobotResourceRemovedIntegrationEvent(event)
     }
-    private fun handleRobotRestoredAttributesIntegrationEvent(event: RobotRestoredAttributesEvent){
+    private suspend fun handleRobotRestoredAttributesIntegrationEvent(event: RobotRestoredAttributesEvent){
         robotEventHandleService.handleRobotRestoredAttributesIntegrationEvent(event)
     }
-    private fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
+    private suspend fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
         robotEventHandleService.handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent)
     }
 
-    private fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
-        planetApplicationService.updateResourcesOnPlanetByEvent(resourceMinedEvent)
+    private suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
+        planetApplicationService.handleResourceMinedEvent(resourceMinedEvent)
     }
 
 
-    private fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
+    private suspend fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
         robotEventHandleService.handleRobotSpawnedIntegrationEvent(robotSpawnedEvent)
     }
 
-    private fun handleBankAccountTransactionBookedEvent(bankAccountTransactionBookedEvent: BankAccountTransactionBookedEvent){
+    private suspend fun handleBankAccountTransactionBookedEvent(bankAccountTransactionBookedEvent: BankAccountTransactionBookedEvent){
         playerApplicationService.handleBankAccountTransactionBookedEvent(bankAccountTransactionBookedEvent)
     }
 
-    private fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
-        planetApplicationService.updatePlanetAndNeighboursFromEvent(planetDiscoveredEvent)
+    private suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
+        planetApplicationService.handlePlanetDiscoveredEvent(planetDiscoveredEvent)
 
     }
 
@@ -229,15 +302,9 @@ class PlayerEventListener @Autowired constructor(
             robotApplicationService.removeAllDeadRobots()
             gameApplicationService.updateRoundCount(event.roundNumber)
             strategyService.updateStrategy(game, player.moneten, robotApplicationService.getTotalNumberOfRobots())
-            logger.info("upgrade robot jobs")
             robotApplicationService.upgradeRobotsJobs(game) //nimmt viel zeit ein
-            logger.info("upgrade robot jobs done")
-
-
             playerApplicationService.buyRobots()
-            //robotStrategyService.executeCommandList()
-            //playerApplicationService.letRobotsPlayRound()
-            //robotStrategyService.executeCommandListParallel()
+
 
             commandLatch.countDown()
             handleRobotsRevealedAndRoundStartedBothReady()
@@ -269,10 +336,10 @@ class PlayerEventListener @Autowired constructor(
      */
     private fun handleRobotsRevealedAndRoundStartedBothReady(){
         if(commandLatch.count == 0L){
-            logger.info("handling both events and executing command list")
             val player = playerApplicationService.queryAndIfNeededCreatePlayer()
             val game = gameApplicationService.queryActiveGame().get()
-            robotStrategyService.fillCommandList(player,game)
+            //robotStrategyService.fillCommandList(player,game)
+            robotStrategyService.fillCommandListExperimental(player,game)
             robotStrategyService.executeCommandListParallel()
         }
     }

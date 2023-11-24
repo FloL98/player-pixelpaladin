@@ -105,7 +105,7 @@ class ShortestPathCalculator(var planets: List<Planet>) {
             }*/
 
 
-            for (neighbor in convertNeighborsToList(lastPlanet)) {
+            for (neighbor in lastPlanet.getAllNeighborsAsList()) {
                 if (neighbor !in visited) {
                     val newPath = path.toMutableList()
                     newPath.add(neighbor)
@@ -130,54 +130,7 @@ class ShortestPathCalculator(var planets: List<Planet>) {
         return neighbors
     }
 
-    /*private val graph: Map<UUID, List<Planet>> = planets.groupBy { it.planetId }
 
-    //doesnt work yet
-    fun shortestPathToResourceType(start: Planet, targetType: MineableResourceType): List<Planet>? {
-        val distances = mutableMapOf(start.planetId to 0) //<planetId, distanz zum start>
-        val previous = mutableMapOf<UUID, Planet>() // <<UUID vorgänger, Planet vorgänger>
-        val unvisited = planets.filter { it != start }.toMutableList()  // list<unbesuchte planeten ohne start>
-
-        while (unvisited.isNotEmpty()) {
-            val current = unvisited.minByOrNull { distances.getOrDefault(it.planetId, Int.MAX_VALUE) } ?: break //
-            unvisited.remove(current)
-
-            for (neighbor in graph.getValue(current.planetId)) {
-                val alt = distances.getValue(current.planetId) + 1 // Assuming equal weight for all edges
-
-                if (alt < distances.getOrDefault(neighbor.planetId, Int.MAX_VALUE)) {
-                    distances[neighbor.planetId] = alt
-                    previous[neighbor.planetId] = current
-                }
-            }
-        }
-
-        val path = mutableListOf<Planet>()
-        var current = unvisited.firstOrNull { it._resourceType == targetType } ?: return null
-
-        while (previous.containsKey(current.planetId)) {
-            path.add(current)
-            current = previous.getValue(current.planetId)
-        }
-
-        path.add(start)
-        path.reverse()
-
-        return if (path.first() == start) path else null
-    }*/
-
-    /*fun shortestPathToString(start: Planet, targetType: MineableResourceType): String{
-        val path = shortestPathToResourceType(start,targetType)
-        if(path == null)
-            return "null - no path found"
-        else{
-            var string = ""
-            for(planet in path){
-                string += " ${planet.planetId}"
-            }
-            return string
-        }
-    }*/
 
     fun shortestPathToString(start: Planet, targetType: MineableResourceType): String {
         val path = findShortestPathToType(start, targetType)

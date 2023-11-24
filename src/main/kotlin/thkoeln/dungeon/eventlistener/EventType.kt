@@ -41,11 +41,11 @@ enum class EventType(val stringValue: String) {
         get() = (this == BANK_INITIALIZED || this == BANK_CLEARED || this == BANK_ACCOUNT_TRANSACTION_BOOKED)
 
     val isPlanetRelated: Boolean
-        get() = (this == RESOURCE_MINED)
+        get() = (this == RESOURCE_MINED || this == PLANET_DISCOVERED)
 
     val isNoCategoryYet: Boolean
         get() = (this == ERROR || this == UNKNOWN || this == ROBOT_ATTACKED || this == ROBOTS_REVEALED
-                || this == PLANET_DISCOVERED || this == ROUND_STATUS || this == GAME_STATUS)
+                 || this == ROUND_STATUS || this == GAME_STATUS)
     companion object {
         @JvmStatic
         fun findByStringValue(stringValue: String): EventType {

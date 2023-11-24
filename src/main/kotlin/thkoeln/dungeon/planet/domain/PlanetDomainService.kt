@@ -34,7 +34,7 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
             Planet(newPlanetId)
         } else {
             val foundOptional = planetRepository.findByPlanetId(newPlanetId)
-            if (foundOptional!!.isPresent) {
+            if (foundOptional.isPresent) {
                 // not sure if this can happen ... but just to make sure, all the same.
                 foundOptional.get()
             } else {
