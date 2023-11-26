@@ -4,16 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="added more parallelism, updated strategies, cleaned up code">
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="small fixes, added 2 new strategies">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/TestServiceRobotStrategy.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -164,7 +159,7 @@
       <workItem from="1700821037090" duration="24910000" />
       <workItem from="1700912367920" duration="42974000" />
       <workItem from="1700995452390" duration="1116000" />
-      <workItem from="1700996759515" duration="6971000" />
+      <workItem from="1700996759515" duration="8239000" />
     </task>
     <task id="LOCAL-00001" summary="initial fixes">
       <option name="closed" value="true" />
@@ -206,7 +201,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700995840527</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="small fixes, added 2 new strategies">
+      <option name="closed" value="true" />
+      <created>1701003861637</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1701003861637</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -229,7 +232,8 @@
     <MESSAGE value="partly process events in parallel, changed strategy(old code not deleted yet)" />
     <MESSAGE value="update helm chart version number to old number" />
     <MESSAGE value="added more parallelism, updated strategies, cleaned up code" />
-    <option name="LAST_COMMIT_MESSAGE" value="added more parallelism, updated strategies, cleaned up code" />
+    <MESSAGE value="small fixes, added 2 new strategies" />
+    <option name="LAST_COMMIT_MESSAGE" value="small fixes, added 2 new strategies" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

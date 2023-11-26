@@ -64,53 +64,6 @@ class Planet {
     constructor()
 
 
-    /**
-     * A neighbour relationship is always set on BOTH sides.
-     * @param otherPlanet
-     * @param direction
-     */
-    fun defineNeighbour(otherPlanet: Planet?, direction: CompassDirection) {
-        if (otherPlanet == null) throw PlanetException("Cannot establish neighbouring relationship with null planet!")
-        try {
-            val otherGetter = neighbouringGetter(direction.oppositeDirection)
-            val setter = neighbouringSetter(direction)
-            setter.invoke(this, otherPlanet)
-            val remoteNeighbour = otherGetter.invoke(otherPlanet) as Planet?
-            if (this != remoteNeighbour) {
-                val otherSetter = neighbouringSetter(direction.oppositeDirection)
-                otherSetter.invoke(otherPlanet, this)
-            }
-        } catch (e: IllegalAccessException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        } catch (e: InvocationTargetException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        } catch (e: NoSuchMethodException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        }
-        closeNeighbouringCycleForAllDirectionsBut(direction)
-    }
-
-
-
-    fun closeNeighbouringCycleForAllDirectionsBut(notInThisDirection: CompassDirection) {
-        for (compassDirection in CompassDirection.entries) {
-            if (compassDirection == notInThisDirection) continue
-            val neighbour = getNeighbour(compassDirection)
-            if (neighbour != null) {
-                for (ninetyDegrees in compassDirection.ninetyDegrees()) {
-                    if (getNeighbour(ninetyDegrees) != null && neighbour.getNeighbour(ninetyDegrees) != null && getNeighbour(
-                            ninetyDegrees
-                        )!!.getNeighbour(compassDirection) == null
-                    ) {
-                        getNeighbour(ninetyDegrees)!!.defineNeighbour(
-                            neighbour.getNeighbour(ninetyDegrees), compassDirection
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun resetAllNeighbours() {
         northNeighbour = null
         westNeighbour = null

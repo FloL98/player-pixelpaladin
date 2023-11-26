@@ -28,144 +28,17 @@ class PlanetApplicationService @Autowired constructor(
     private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(PlanetApplicationService::class.java)
-    var modelMapper = ModelMapper()
 
-
-    suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
-
-        val planetIdsToLock = mutableListOf(planetDiscoveredEvent.planetId)
-        for(planetNeighbor in planetDiscoveredEvent.neighbours)
-            planetIdsToLock.add(planetNeighbor.id)
-
-
-        while (true) {
-            // Versuche, alle Sperren zu erlangen
-            val planetIdsWhichsLockIsAquired: MutableList<UUID> = mutableListOf()
-            val allLocksAcquired = planetIdsToLock
-                .map { val locked =entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.tryLock()
-                if(locked) planetIdsWhichsLockIsAquired.add(it)
-                locked}
-                .all { it }
-
-            if (allLocksAcquired) {
-                try {
-                    // Führe die Verarbeitungslogik hier aus
-                    val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
-                    val planet: Planet
-                    if (planetOpt.isEmpty)
-                        planet = Planet.fromPlanetIdAndMovementDifficultyAndResource(
-                            planetDiscoveredEvent.planetId,
-                            planetDiscoveredEvent.movementDifficulty,
-                            planetDiscoveredEvent.mineableResource
-                        )
-                    else {
-                        planet = planetOpt.get()
-                        planet.mineableResource = planetDiscoveredEvent.mineableResource
-                    }
-
-                    if (!planet.visited) {
-                        planet.visited = true
-                        planetRepository.save(planet)
-                        for (neighbour in planetDiscoveredEvent.neighbours) {
-                            //val neighborMutex = entityLockService.planetLocks.computeIfAbsent(neighbour.id) { Mutex() }
-                            //neighborMutex.withLock {
-                            planetDomainService.addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
-                            //}
-                        }
-                    } else
-                        planetRepository.save(planet)
-
-                } finally {
-                    // Entsperre alle Planeten
-                    planetIdsToLock.forEach { entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock() }
-                }
-                break // Verlassen der Schleife nach erfolgreicher Verarbeitung
-            } else {
-                // Nicht alle Sperren konnten erlangt werden, also entsperre alle und versuche es erneut
-                planetIdsWhichsLockIsAquired.forEach { entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock() }
-                // Warten, um Deadlocks zu vermeiden
-                delay(Random.nextInt(10, 100).toLong())
-                yield()
-            }
-        }
-
-
-        //}
-
-
-        /*val planet = findByPlanetId(planetDiscoveredEvent.planetId)
-        modelMapper.map(planetDiscoveredEvent,planet)
-        if(!planet.visited) {
-            planet.visited = true
-            planetRepository.save(planet)
-            for (neighbour in planetDiscoveredEvent.neighbours) {
-                planetDomainService.addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
-            }
-        }
-        else
-            planetRepository.save(planet)*/
-
-        //only for shortest path testing purpose
-        /*val pathCoal = ShortestPathCalculator(findAll()).shortestPathToString(planet,MineableResourceType.COAL)
-        val pathIron = ShortestPathCalculator(findAll()).shortestPathToString(planet,MineableResourceType.IRON)
-        logger.info("Shortest path COAL: $pathCoal")
-        logger.info("Shortest path IRON: $pathIron")*/
-    }
-
-    /**
-     * since the neighbor setting is not threadsafe and I didnt found a proper way to do it, we use attribute visited
-     * to check, if we have to set neighbors. If yes, we wait until all other coroutines are finished and then execute.
-     * If not, then we dont have to set neighbors and can keep working in parallel
-     */
-    fun handlePlanetDiscoveredEventThreadSafe(planetDiscoveredEvent: PlanetDiscoveredEvent, coroutineScope: CoroutineScope) {
-        val planetOptNotThreadSafe = planetRepository.findById(planetDiscoveredEvent.planetId)
-
-        if (planetOptNotThreadSafe.isEmpty || !planetOptNotThreadSafe.get().visited) {
-            logger.info("waiting for coroutines started")
-            runBlocking {
-                coroutineScope.coroutineContext.job.children.forEach { it.join() }
-            }
-            logger.info("waiting for coroutines ended")
-            logger.info("planetDiscovered start")
-            val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
-            val planet: Planet
-            if (planetOpt.isEmpty)
-                planet = Planet.fromPlanetIdAndMovementDifficultyAndResource(
-                    planetDiscoveredEvent.planetId,
-                    planetDiscoveredEvent.movementDifficulty,
-                    planetDiscoveredEvent.mineableResource
-                )
-            else {
-                planet = planetOpt.get()
-                planet.mineableResource = planetDiscoveredEvent.mineableResource
-            }
-
-            //if (!planet.visited) {
-                planet.visited = true
-                //planetRepository.save(planet)
-                for (neighbour in planetDiscoveredEvent.neighbours) {
-                    planetDomainService.addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
-                }
-            //} else
-                //planetRepository.save(planet)
-            logger.info("planetDiscovered end")
-        }
-        else {
-            val planet = planetRepository.findById(planetDiscoveredEvent.planetId).get()
-            planet.mineableResource = planetDiscoveredEvent.mineableResource
-            planetRepository.save(planet)
-        }
-    }
 
 
 
     suspend fun handlePlanetDiscoveredEventWithoutMerge(planetDiscoveredEvent: PlanetDiscoveredEvent) {
+        logger.info("planet discovered start")
         val planetVisited = planetRepository.findById(planetDiscoveredEvent.planetId)
             .map { it.visited }
             .orElse(false)
 
         if(!planetVisited) {
-            logger.warn("planet discovered start")
             while (true) {
                 //finds out ids from planet, his neighbors and neighbor neighbors to know what to lock
                 val planetIdsToLock = mutableListOf(planetDiscoveredEvent.planetId)
@@ -181,7 +54,7 @@ class PlanetApplicationService @Autowired constructor(
                 }
 
 
-                // Versuche, alle Sperren zu erlangen
+                //trying to get all locks
                 val planetIdsWhichsLockIsAquired: MutableList<UUID> = mutableListOf()
                 val allLocksAcquired = planetIdsToLock
                     .map {
@@ -193,7 +66,6 @@ class PlanetApplicationService @Autowired constructor(
 
                 if (allLocksAcquired) {
                     try {
-                        // Führe die Verarbeitungslogik hier aus
                         val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
                         val planet: Planet
                         if (planetOpt.isEmpty)
@@ -209,7 +81,6 @@ class PlanetApplicationService @Autowired constructor(
 
                         if (!planet.visited) {
                             planet.visited = true
-                            //planetRepository.save(planet)
                             logger.warn("add neighbors start")
                             for (neighbour in planetDiscoveredEvent.neighbours) {
                                 addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
@@ -219,24 +90,24 @@ class PlanetApplicationService @Autowired constructor(
                             planetRepository.save(planet)
 
                     } finally {
-                        // Entsperre alle Planeten
+                        //unlock all locks
                         planetIdsToLock.forEach {
                             entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock()
                         }
                     }
                     break
                 } else {
-                    // Nicht alle Sperren konnten erlangt werden, also entsperre alle und versuche es erneut
+                    //unlock all locks if couldnt get all locks
                     planetIdsWhichsLockIsAquired.forEach {
                         entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock()
                     }
-                    // Warten, um Deadlocks zu vermeiden
+                    //wait to void deadlocks
                     delay(Random.nextInt(10, 30).toLong())
                     yield()
                 }
             }
         }
-        logger.warn("planet discovered end")
+        logger.info("planet discovered end")
     }
 
 
@@ -248,16 +119,6 @@ class PlanetApplicationService @Autowired constructor(
 
     fun findByPlanetIdOpt(planetId: UUID):Optional<Planet>{
         return planetRepository.findById(planetId)
-    }
-
-    fun registerPlanetIfNotExists(planet: Planet){
-        val planetOpt = planetRepository.findById(planet.planetId)
-        if(planetOpt.isEmpty) {
-            planetRepository.save(planet)
-            logger.info("Planet: $planet registered!")
-        }
-        else
-            logger.info("Planet: $planet already exists!")
     }
 
     fun savePlanet(planet: Planet){

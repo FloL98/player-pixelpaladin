@@ -52,27 +52,10 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
         planetRepository.save(planet)
     }
     fun visitPlanet(planet: Planet) {
-        /*val planet = planetRepository.findByPlanetId(planetId)
-            .orElseThrow { PlanetException("Planet with UUID $planetId not found!") }*/
         planet.visited = true
         planetRepository.save(planet)
     }
 
-    //direkt die objeke übergeben ansttatt uuids?
-    fun addNeighbourToPlanet(planet: Planet, neighbourId: UUID, direction: CompassDirection) {
-        val neighbourOpt = planetRepository.findById(neighbourId)
-        val neighbour = if (neighbourOpt.isPresent) neighbourOpt.get() else Planet(neighbourId)
-        //neighbour.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
-        planet.defineNeighbour(neighbour, direction)
-        planetRepository.save(planet)
-        planetRepository.save(neighbour)
-    }
-
-    fun saveAll() {
-        val allPlanets = planetRepository.findAll()
-        //for (planet in allPlanets) planetRepository.save(planet)
-        planetRepository.saveAll(allPlanets)
-    }
 
 
 }
