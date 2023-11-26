@@ -14,7 +14,6 @@ class FullInventoryStrategy (val game: Game, val robot: Robot, val player: Playe
 
     override fun getCommand(): Command? {
         if(robot.inventory.full) {
-            logger.info("inventory full: ${robot.inventory.usedStorage} -> selling")
             return Command().createSellingCommand(player.playerId!!, robot.robotId)
         }
         else return null

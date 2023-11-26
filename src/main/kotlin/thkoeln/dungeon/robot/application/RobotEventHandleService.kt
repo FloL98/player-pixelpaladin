@@ -177,7 +177,7 @@ class RobotEventHandleService @Autowired constructor(
                 addedAmount
             )*/
             val amountBefore = robot.inventory.usedStorage
-            robot.inventory = robot.inventory.fromNewResource(robotResourceMinedEvent.resourceInventory) //welche variante Reihenfolgeunabhängiger?
+            robot.inventory = robot.inventory.fromNewResource(robotResourceMinedEvent.resourceInventory) //welche variante ist reihenfolgeunabhängiger?
             robotRepository.save(robot)
             logger.info("Robot resource mined +${robotResourceMinedEvent.minedAmount}, it has now: ${robot.inventory.usedStorage} from ${robot.inventory.maxStorage}. Before it had $amountBefore!!")
         }
