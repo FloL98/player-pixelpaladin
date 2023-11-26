@@ -2,23 +2,23 @@ package thkoeln.dungeon.planet.application
 
 
 
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.modelmapper.ModelMapper
-import thkoeln.dungeon.domainprimitives.Coordinate.Companion.initialCoordinate
 import org.springframework.beans.factory.annotation.Autowired
 import thkoeln.dungeon.planet.domain.Planet
-import thkoeln.dungeon.domainprimitives.TwoDimDynamicArray
 import thkoeln.dungeon.planet.domain.PlanetRepository
 import thkoeln.dungeon.planet.domain.PlanetDomainService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import thkoeln.dungeon.EntityLockService
+import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.eventlistener.concreteevents.PlanetDiscoveredEvent
 import thkoeln.dungeon.eventlistener.concreteevents.ResourceMinedEvent
+import thkoeln.dungeon.planet.domain.PlanetException
+import java.lang.reflect.InvocationTargetException
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.random.Random
 
 @Service
@@ -32,8 +32,6 @@ class PlanetApplicationService @Autowired constructor(
 
 
     suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
-        //val planetMutex = entityLockService.planetLocks.computeIfAbsent(planetDiscoveredEvent.planetId) { Mutex() }
-        //planetMutex.withLock {
 
         val planetIdsToLock = mutableListOf(planetDiscoveredEvent.planetId)
         for(planetNeighbor in planetDiscoveredEvent.neighbours)
@@ -52,7 +50,7 @@ class PlanetApplicationService @Autowired constructor(
             if (allLocksAcquired) {
                 try {
                     // Führe die Verarbeitungslogik hier aus
-                    val planetOpt = planetRepository.findByPlanetId(planetDiscoveredEvent.planetId)
+                    val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
                     val planet: Planet
                     if (planetOpt.isEmpty)
                         planet = Planet.fromPlanetIdAndMovementDifficultyAndResource(
@@ -87,6 +85,7 @@ class PlanetApplicationService @Autowired constructor(
                 planetIdsWhichsLockIsAquired.forEach { entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock() }
                 // Warten, um Deadlocks zu vermeiden
                 delay(Random.nextInt(10, 100).toLong())
+                yield()
             }
         }
 
@@ -113,45 +112,147 @@ class PlanetApplicationService @Autowired constructor(
         logger.info("Shortest path IRON: $pathIron")*/
     }
 
-
-
     /**
-     * Method to create arrays for display of the planet map
+     * since the neighbor setting is not threadsafe and I didnt found a proper way to do it, we use attribute visited
+     * to check, if we have to set neighbors. If yes, we wait until all other coroutines are finished and then execute.
+     * If not, then we dont have to set neighbors and can keep working in parallel
      */
-    fun allPlanetsAs2DArrays(): Map<Planet?, TwoDimDynamicArray<Planet?>> {
-        val planetMap: MutableMap<Planet?, TwoDimDynamicArray<Planet?>> = HashMap()
-        val allPlanets = planetRepository.findAll()
-        for (planet in allPlanets) {
-            planet.temporaryProcessingFlag = false
+    fun handlePlanetDiscoveredEventThreadSafe(planetDiscoveredEvent: PlanetDiscoveredEvent, coroutineScope: CoroutineScope) {
+        val planetOptNotThreadSafe = planetRepository.findById(planetDiscoveredEvent.planetId)
+
+        if (planetOptNotThreadSafe.isEmpty || !planetOptNotThreadSafe.get().visited) {
+            logger.info("waiting for coroutines started")
+            runBlocking {
+                coroutineScope.coroutineContext.job.children.forEach { it.join() }
+            }
+            logger.info("waiting for coroutines ended")
+            logger.info("planetDiscovered start")
+            val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
+            val planet: Planet
+            if (planetOpt.isEmpty)
+                planet = Planet.fromPlanetIdAndMovementDifficultyAndResource(
+                    planetDiscoveredEvent.planetId,
+                    planetDiscoveredEvent.movementDifficulty,
+                    planetDiscoveredEvent.mineableResource
+                )
+            else {
+                planet = planetOpt.get()
+                planet.mineableResource = planetDiscoveredEvent.mineableResource
+            }
+
+            //if (!planet.visited) {
+                planet.visited = true
+                //planetRepository.save(planet)
+                for (neighbour in planetDiscoveredEvent.neighbours) {
+                    planetDomainService.addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
+                }
+            //} else
+                //planetRepository.save(planet)
+            logger.info("planetDiscovered end")
+        }
+        else {
+            val planet = planetRepository.findById(planetDiscoveredEvent.planetId).get()
+            planet.mineableResource = planetDiscoveredEvent.mineableResource
             planetRepository.save(planet)
         }
-        // create this as a Map of space stations (which are the first planets known to the player) pointing
-        // to a local 2d array containing all planets connected to that space station. When two such "islands" are
-        // discovered to be connected, one of it is taken out of the map (to avoid printing planets twice)
-        val spacestations = planetRepository.findByIsSpaceStationEquals(true)
-        for (spacestation in spacestations!!) {
-            if (spacestation!!.temporaryProcessingFlag == false) {
-                val island : TwoDimDynamicArray<Planet?> = TwoDimDynamicArray(spacestation)
-                // not already visited, i.e. this is really an island (= partial graph)
-                spacestation.constructLocalIsland(island, initialCoordinate())
-                planetMap[spacestation] = island
-                planetDomainService.saveAll()
-            }
-        }
-        return planetMap
     }
 
+
+
+    suspend fun handlePlanetDiscoveredEventWithoutMerge(planetDiscoveredEvent: PlanetDiscoveredEvent) {
+        val planetVisited = planetRepository.findById(planetDiscoveredEvent.planetId)
+            .map { it.visited }
+            .orElse(false)
+
+        if(!planetVisited) {
+            logger.warn("planet discovered start")
+            while (true) {
+                //finds out ids from planet, his neighbors and neighbor neighbors to know what to lock
+                val planetIdsToLock = mutableListOf(planetDiscoveredEvent.planetId)
+                for (planetNeighbor in planetDiscoveredEvent.neighbours) {
+                    val nPlanetOpt = planetRepository.findById(planetNeighbor.id)
+                    if (nPlanetOpt.isPresent) {
+                        for (nPlanetNeighbors in nPlanetOpt.get().getAllNeighborsAsList()) {
+                            if (!planetIdsToLock.contains(nPlanetNeighbors.planetId))
+                                planetIdsToLock.add(nPlanetNeighbors.planetId)
+                        }
+                    }
+                    planetIdsToLock.add(planetNeighbor.id)
+                }
+
+
+                // Versuche, alle Sperren zu erlangen
+                val planetIdsWhichsLockIsAquired: MutableList<UUID> = mutableListOf()
+                val allLocksAcquired = planetIdsToLock
+                    .map {
+                        val locked = entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.tryLock()
+                        if (locked) planetIdsWhichsLockIsAquired.add(it)
+                        locked
+                    }
+                    .all { it }
+
+                if (allLocksAcquired) {
+                    try {
+                        // Führe die Verarbeitungslogik hier aus
+                        val planetOpt = planetRepository.findById(planetDiscoveredEvent.planetId)
+                        val planet: Planet
+                        if (planetOpt.isEmpty)
+                            planet = Planet.fromPlanetIdAndMovementDifficultyAndResource(
+                                planetDiscoveredEvent.planetId,
+                                planetDiscoveredEvent.movementDifficulty,
+                                planetDiscoveredEvent.mineableResource
+                            )
+                        else {
+                            planet = planetOpt.get()
+                            planet.mineableResource = planetDiscoveredEvent.mineableResource
+                        }
+
+                        if (!planet.visited) {
+                            planet.visited = true
+                            //planetRepository.save(planet)
+                            logger.warn("add neighbors start")
+                            for (neighbour in planetDiscoveredEvent.neighbours) {
+                                addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
+                            }
+                            logger.warn("add neighbors end")
+                        } else
+                            planetRepository.save(planet)
+
+                    } finally {
+                        // Entsperre alle Planeten
+                        planetIdsToLock.forEach {
+                            entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock()
+                        }
+                    }
+                    break
+                } else {
+                    // Nicht alle Sperren konnten erlangt werden, also entsperre alle und versuche es erneut
+                    planetIdsWhichsLockIsAquired.forEach {
+                        entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock()
+                    }
+                    // Warten, um Deadlocks zu vermeiden
+                    delay(Random.nextInt(10, 30).toLong())
+                    yield()
+                }
+            }
+        }
+        logger.warn("planet discovered end")
+    }
+
+
+
+
     fun findByPlanetId(planetId: UUID):Planet{
-        return planetRepository.findByPlanetId(planetId).orElseThrow{PlanetApplicationException("Planet doesnt exist!")}
+        return planetRepository.findById(planetId).orElseThrow{PlanetApplicationException("Planet doesnt exist!")}
     }
 
     fun findByPlanetIdOpt(planetId: UUID):Optional<Planet>{
-        return planetRepository.findByPlanetId(planetId)
+        return planetRepository.findById(planetId)
     }
 
     fun registerPlanetIfNotExists(planet: Planet){
-        val planetFromRepo = planetRepository.findByPlanetId(planet.planetId)
-        if(planetFromRepo.isEmpty) {
+        val planetOpt = planetRepository.findById(planet.planetId)
+        if(planetOpt.isEmpty) {
             planetRepository.save(planet)
             logger.info("Planet: $planet registered!")
         }
@@ -159,11 +260,15 @@ class PlanetApplicationService @Autowired constructor(
             logger.info("Planet: $planet already exists!")
     }
 
+    fun savePlanet(planet: Planet){
+        planetRepository.save(planet)
+    }
+
     suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
         val mutex = entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }
         mutex.withLock {
             val planetOpt =
-                planetRepository.findByPlanetId(resourceMinedEvent.planetId)//findByPlanetId(resourceMinedEvent.planetId)
+                planetRepository.findById(resourceMinedEvent.planetId)
             if (planetOpt.isPresent) {
                 val planet = planetOpt.get()
                 planet.mineableResource = planet.mineableResource?.decreaseBy(resourceMinedEvent.minedAmount) //resourceMinedEvent.resource
@@ -178,5 +283,91 @@ class PlanetApplicationService @Autowired constructor(
 
     fun findAll(): List<Planet>{
         return planetRepository.findAll()
+    }
+
+
+
+    fun addNeighbourToPlanet(planet: Planet, neighbourId: UUID, direction: CompassDirection) {
+        val neighbourOpt = planetRepository.findById(neighbourId)
+        val neighbour: Planet
+        if (neighbourOpt.isPresent)
+            neighbour =neighbourOpt.get()
+        else {
+            neighbour = Planet(neighbourId)
+            planetRepository.save(neighbour)
+        }
+        defineNeighbour(planet,neighbour, direction)
+
+    }
+
+    fun defineNeighbour(planet: Planet, otherPlanet: Planet?, direction: CompassDirection) {
+        try {
+            val otherGetter = planet.neighbouringGetter(direction.oppositeDirection)
+            val setter = planet.neighbouringSetter(direction)
+            setter.invoke(planet, otherPlanet)
+            val remoteNeighbour = otherGetter.invoke(otherPlanet) as Planet?
+            if (planet != remoteNeighbour) {
+                val otherSetter = planet.neighbouringSetter(direction.oppositeDirection)
+                otherSetter.invoke(otherPlanet, planet)
+            }
+        } catch (e: IllegalAccessException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        } catch (e: InvocationTargetException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        } catch (e: NoSuchMethodException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        }
+
+        planetRepository.save(planet)
+        if(otherPlanet!=null)
+            planetRepository.save(otherPlanet)
+        closeNeighbouringCycleForAllDirectionsBut(planet,direction)
+
+    }
+    fun defineNeighbour1(planet: Planet, otherPlanet: Planet?, direction: CompassDirection) {
+        if(otherPlanet!=null){
+            when (direction) {
+                CompassDirection.NORTH -> {
+                    planet.northNeighbour = otherPlanet
+                    otherPlanet.southNeighbour = planet
+                }
+                CompassDirection.EAST -> {
+                    planet.eastNeighbour = otherPlanet
+                    otherPlanet.westNeighbour = planet
+                }
+                CompassDirection.SOUTH -> {
+                    planet.southNeighbour = otherPlanet
+                    otherPlanet.northNeighbour = planet
+                }
+                CompassDirection.WEST -> {
+                    planet.westNeighbour = otherPlanet
+                    otherPlanet.eastNeighbour = planet
+                }
+            }
+        }
+        planetRepository.save(planet)
+        if(otherPlanet!=null)
+            planetRepository.save(otherPlanet)
+        closeNeighbouringCycleForAllDirectionsBut(planet,direction)
+
+    }
+
+    fun closeNeighbouringCycleForAllDirectionsBut(planet: Planet, notInThisDirection: CompassDirection)  {
+        for (compassDirection in CompassDirection.entries) {
+            if (compassDirection == notInThisDirection) continue
+            val neighbour = planet.getNeighbour(compassDirection)
+            if (neighbour != null) {
+                for (ninetyDegrees in compassDirection.ninetyDegrees()) {
+                    if (planet.getNeighbour(ninetyDegrees) != null && neighbour.getNeighbour(ninetyDegrees) != null && planet.getNeighbour(
+                            ninetyDegrees
+                        )!!.getNeighbour(compassDirection) == null
+                    ) {
+                        defineNeighbour(planet.getNeighbour(ninetyDegrees)!!,
+                            neighbour.getNeighbour(ninetyDegrees), compassDirection
+                        )
+                    }
+                }
+            }
+        }
     }
 }

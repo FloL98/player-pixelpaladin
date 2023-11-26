@@ -98,9 +98,9 @@ class StrategyService@Autowired constructor(
         var currentRound = strategy.game?.currentRoundNumber!!
         //strategy.maxNumberOfRobots = 5 + (currentRound/2)
         //testweise die maxnumber auf 300
-        strategy.maxNumberOfRobots = 150
-        if(strategy.maxNumberOfRobots> 150)
-            strategy.maxNumberOfRobots = 150
+        strategy.maxNumberOfRobots = 100
+        if(strategy.maxNumberOfRobots> 100)
+            strategy.maxNumberOfRobots = 100
         strategyRepository.save(strategy)
     }
 

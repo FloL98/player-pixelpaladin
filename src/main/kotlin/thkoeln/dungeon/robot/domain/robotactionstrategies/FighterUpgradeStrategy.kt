@@ -14,20 +14,8 @@ class FighterUpgradeStrategy(val gameWorld: GameWorld, val game: Game, val robot
 
     private val logger = LoggerFactory.getLogger(GameServiceRESTAdapter::class.java)
 
-    override fun getCommand(): Command? {
-        val upgradeType: UpgradeType = if(robot.healthLevel < strategy.currentFighterMaxLevels && this.strategy.budgetForFightingUpgrades.amount >= gameWorld.robotApplicationService.moneyNeededForNextUpgrade(robot,game,UpgradeType.HEALTH)?.amount!!)
-            UpgradeType.HEALTH
-        else if(robot.damageLevel < strategy.currentFighterMaxLevels && this.strategy.budgetForFightingUpgrades.amount >= gameWorld.robotApplicationService.moneyNeededForNextUpgrade(robot,game,UpgradeType.DAMAGE)?.amount!!)
-            UpgradeType.DAMAGE
-        else
-            return null
-        val itemName =  gameWorld.robotApplicationService.getNextUpgradeLevelAsString(robot, upgradeType)
-        val shopItem = this.game.shop.filter { it.name == itemName}
-        gameWorld.strategyService.subtractFromFightingBudget(this.strategy, shopItem.first().price.amount)
-        return Command().createUpgradePurchaseCommand(player.playerId!!,robot.robotId,shopItem.first())
-    }
 
-    override fun getCommand1(): Command? {
+    override fun getCommand(): Command? {
         val upgradeType: UpgradeType = if(robot.healthLevel < strategy.currentFighterMaxLevels && this.strategy.budgetForFightingUpgrades.amount >= gameWorld.robotApplicationService.moneyNeededForNextUpgrade(robot,game,UpgradeType.HEALTH)?.amount!!)
             UpgradeType.HEALTH
         else if(robot.damageLevel < strategy.currentFighterMaxLevels && this.strategy.budgetForFightingUpgrades.amount >= gameWorld.robotApplicationService.moneyNeededForNextUpgrade(robot,game,UpgradeType.DAMAGE)?.amount!!)

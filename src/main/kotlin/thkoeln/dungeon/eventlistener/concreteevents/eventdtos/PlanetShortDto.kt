@@ -1,4 +1,4 @@
-package thkoeln.dungeon.restadapter
+package thkoeln.dungeon.eventlistener.concreteevents.eventdtos
 
 
 import thkoeln.dungeon.domainprimitives.MineableResourceType

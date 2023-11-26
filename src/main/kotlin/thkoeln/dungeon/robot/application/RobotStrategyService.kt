@@ -5,21 +5,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import thkoeln.dungeon.strategy.domain.GameWorld
-
-
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import thkoeln.dungeon.domainprimitives.Command
-import thkoeln.dungeon.domainprimitives.UpgradeType
-import thkoeln.dungeon.game.application.GameApplicationService
 import thkoeln.dungeon.game.domain.Game
 import thkoeln.dungeon.planet.domain.PlanetDomainService
 import thkoeln.dungeon.player.domain.Player
 import thkoeln.dungeon.restadapter.GameServiceRESTAdapter
 import thkoeln.dungeon.strategy.application.StrategyService
 import thkoeln.dungeon.robot.domain.Robot
-import thkoeln.dungeon.robot.domain.RobotJob
 import thkoeln.dungeon.robot.domain.robotactionstrategies.*
 import java.util.*
 
@@ -34,47 +29,14 @@ class RobotStrategyService@Autowired constructor(
     private val robotEventHandleService: RobotEventHandleService,
     private val strategyService: StrategyService,
     private val planetDomainService: PlanetDomainService,
-    private val gameApplicationService: GameApplicationService,
 ) {
     private val logger = LoggerFactory.getLogger(GameServiceRESTAdapter::class.java)
 
     private val gameWorld = GameWorld(strategyService,robotApplicationService,planetDomainService,robotEventHandleService)
 
-
-    //Feedback:
-    //strategy-pattern
-    //ki-strategien
-    //"gameworld"- als ganze strukturen (modelle) übergeben, die alle Infos enthalten, um passende strategy zu bestimmen
-    //jede aktion/strategy mit zahl 1-10 bewerten
-
-
-    //aktuell nicht benutzt
-    fun commandRobotsToTakeAction(player: Player?, currentGame: Game){
-        val robots: List<Robot> = robotApplicationService.getAllRobots()
-        logger.info("${robots.size} robots currently exists!")
-        for(robot in robots){
-            val command = findOptimalRobotAction(robot, player!!, currentGame)
-            if(command != null) {
-                //logger.info("robotcommand : ${command.commandType}")
-                gameServiceRESTAdapter.sendPostRequestForCommand(command)
-            }
-        }
-    }
-
-    private fun findOptimalRobotAction(robot: Robot, player: Player, currentGame: Game): Command?{
-        val strategy = strategyService.getStrategyByGame(currentGame)
-        return if (robot.job == RobotJob.FIGHTER) {
-            FighterActionStrategy(gameWorld, currentGame, robot, player, strategy).getCommand()
-        } else if (robot.job.isMiner())
-            MinerActionStrategy(gameWorld, currentGame,robot, player, strategy).getCommand()
-        else
-            null
-    }
-
-
     private var commandList: MutableList<Command> = ArrayList<Command>()
 
-    fun fillCommandList(player: Player?, currentGame: Game){
+    /*fun fillCommandList(player: Player?, currentGame: Game){
         val robots: List<Robot> = robotApplicationService.getAllRobots()
         logger.info("${robots.size} robots currently exists!")
         for(robot in robots){
@@ -86,16 +48,16 @@ class RobotStrategyService@Autowired constructor(
         }
 
         logger.info("Done with filling command list!")
-    }
+    }*/
 
-    fun fillCommandListExperimental(player: Player?, currentGame: Game){
+    fun fillCommandList(player: Player?, currentGame: Game){
         val robots: List<Robot> = robotApplicationService.getAllRobots()
         logger.info("${robots.size} robots currently exists!")
         val commandListNew = robots.mapNotNull { findOptimalRobotActionExperimental(it, player!!, currentGame) }.toMutableList()
         this.commandList = commandListNew
     }
 
-    fun executeCommandList(){
+    fun executeCommandListNotParallel(){
         var counter = 0
         for(command in commandList) {
             gameServiceRESTAdapter.sendPostRequestForCommand(command)
@@ -111,7 +73,7 @@ class RobotStrategyService@Autowired constructor(
     fun executeCommandListParallel() {
         logger.info("http command start")
         CoroutineScope(Dispatchers.IO).launch {
-            val maxThreads = 3 + commandList.size / 75
+            val maxThreads = 3 + commandList.size / 10 //75
             val robotCommandDispatcher = Dispatchers.IO.limitedParallelism(maxThreads)
             commandList.forEach { command ->
                 launch(robotCommandDispatcher) {
@@ -131,24 +93,24 @@ class RobotStrategyService@Autowired constructor(
         val strategy = strategyService.getStrategyByGame(currentGame)
 
         val minerStrategies: List<RobotActionStrategy> = listOf(
-            FullInventoryStrategy(this.gameWorld, currentGame, robot, player, strategy),
-            RefreshEnergyStrategy(this.gameWorld, currentGame, robot, player, strategy),
-            AttackEnemyStrategy(this.gameWorld, currentGame, robot, player, strategy, /*wird später removed*/ UUID.randomUUID()),
-            UpgradeStrategy(this.gameWorld, currentGame, robot, player, strategy, /*wird später removed*/ UpgradeType.DAMAGE),
-            FarmResourceStrategy(this.gameWorld, currentGame, robot, player, strategy),
+            FullInventoryStrategy(currentGame, robot, player, strategy),
+            RefreshEnergyStrategy(currentGame, robot, player, strategy),
+            AttackEnemyStrategy(this.gameWorld, currentGame, robot, player, strategy),
+            MinerUpgradeStrategy(this.gameWorld, currentGame, robot, player, strategy),
+            FarmResourceStrategy(currentGame, robot, player, strategy),
             MoveStrategy(this.gameWorld, currentGame, robot, player, strategy)
         )
         val fighterStrategies: List<RobotActionStrategy> = listOf(
-            FullInventoryStrategy(this.gameWorld, currentGame, robot, player, strategy),
-            RefreshEnergyStrategy(this.gameWorld, currentGame, robot, player, strategy),
-            AttackEnemyStrategy(this.gameWorld, currentGame, robot, player, strategy, /*wird später removed*/ UUID.randomUUID()),
+            FullInventoryStrategy(currentGame, robot, player, strategy),
+            RefreshEnergyStrategy(currentGame, robot, player, strategy),
+            AttackEnemyStrategy(this.gameWorld, currentGame, robot, player, strategy),
             FighterUpgradeStrategy(this.gameWorld, currentGame, robot, player, strategy),
             MoveStrategy(this.gameWorld, currentGame, robot, player, strategy)
         )
 
         if(robot.job.isMiner()) {
             for (actionStrategy in minerStrategies) {
-                val command = actionStrategy.getCommand1()
+                val command = actionStrategy.getCommand()
                 if (command != null) {
                     return command
                 }
@@ -163,8 +125,6 @@ class RobotStrategyService@Autowired constructor(
             }
         }
         return null
-
-
     }
 
 

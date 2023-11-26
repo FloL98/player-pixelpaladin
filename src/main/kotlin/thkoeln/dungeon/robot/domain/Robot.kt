@@ -3,16 +3,15 @@ package thkoeln.dungeon.robot.domain
 
 
 import com.fasterxml.jackson.annotation.JsonAlias
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.*
-import kotlinx.coroutines.sync.Mutex
 import java.util.UUID
 import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.domainprimitives.Inventory
 import thkoeln.dungeon.domainprimitives.MineableResourceType
+import thkoeln.dungeon.domainprimitives.UpgradeType
 import thkoeln.dungeon.planet.domain.Planet
-import thkoeln.dungeon.restadapter.RobotDto
+import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.RobotDto
 
 
 @Entity
@@ -21,20 +20,12 @@ import thkoeln.dungeon.restadapter.RobotDto
 class Robot(
 
 ) {
-
     @Id
-    @JsonIgnore
-    val id: UUID = UUID.randomUUID()
-
     @JsonAlias("id")
     var robotId: UUID = UUID.randomUUID()
     var player: UUID = UUID.randomUUID()
-
-
     @ManyToOne
-    //@JsonIgnore
     var planet: Planet = Planet()
-
     var alive: Boolean = true
     var maxHealth: Int = 0
     var maxEnergy: Int = 0
@@ -53,19 +44,16 @@ class Robot(
     var inventory: Inventory = Inventory.emptyInventory()
 
 
-    //todo wie stark ist ein Roboter und welchen Einfluss hat es auf den gameplan
     val combatPower: Int
         get() =  damageLevel +healthLevel
 
-    //todo wie gut farmt ein Roboter und welchen Einfluss hat es auf den gameplan
     val farmPower: Int
         get() =  miningSpeedLevel +miningLevel
 
     //job dictates, which resource the robot is supposed to farm (NOT which he CAN farm)
     var job: RobotJob = RobotJob.COAL_WORKER
 
-    //todo moveHistory in strategy mit einbinden
-    @ElementCollection(fetch = FetchType.EAGER)
+    @ElementCollection(fetch = FetchType.LAZY)
     var moveHistory: MutableList<UUID> = ArrayList()
 
     override fun toString(): String {
@@ -110,6 +98,36 @@ class Robot(
                 neighbours.add(getNeighbourByDirection(direction)!!)
         }
         return neighbours
+    }
+
+    fun upgradeStorage(storageLevel: Int, maxStorage: Int){
+        this.inventory.storageLevel = storageLevel
+        this.inventory.maxStorage = maxStorage
+    }
+
+    fun upgradeHealth(healthLevel: Int, health: Int){
+        this.healthLevel = healthLevel
+        this.health = health
+    }
+    fun upgradeDamage(damageLevel: Int, attackdamage: Int){
+        this.damageLevel = damageLevel
+        this.attackDamage = attackdamage
+    }
+    fun upgradeMiningspeed(miningSpeedLevel: Int, miningSpeed: Int){
+        this.miningSpeedLevel = miningSpeedLevel
+        this.miningSpeed = miningSpeed
+    }
+    fun upgradeMining(miningLevel: Int){
+        this.miningLevel = miningLevel
+    }
+    fun upgradeMaxEnergy(energyLevel: Int, maxEnergy: Int){
+        this.energyLevel = energyLevel
+        this.maxEnergy = maxEnergy
+    }
+
+    fun upgradeEnergyRegen(energyRegenLevel: Int, energyRegen: Int){
+        this.energyRegenLevel = energyRegenLevel
+        this.energyRegen = energyRegen
     }
 
 

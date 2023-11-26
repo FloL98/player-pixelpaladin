@@ -14,17 +14,8 @@ import thkoeln.dungeon.strategy.domain.Strategy
 class MoveStrategy(val gameWorld: GameWorld, val game: Game, val robot: Robot, val player: Player, val strategy: Strategy): RobotActionStrategy {
 
 
-    override fun getCommand(): Command? {
-        val planetToMoveTo = gameWorld.robotApplicationService.findPlanetToMoveTo(robot)
-        return if(planetToMoveTo!= null) {
-            //gameWorld.planetDomainService.visitPlanet(planetToMoveTo.planetId)
-            Command().createMoveCommand(robot.robotId, planetToMoveTo.planetId, player.playerId!!)
-            //gameWorld.robotApplicationService.createCommand(robot, player, CommandType.MOVEMENT, planetToMoveTo.planetId, null, "", 0)
-        } else
-            null
-    }
 
-     override fun getCommand1(): Command? {
+     override fun getCommand(): Command? {
          val planetToMoveTo: Planet? = if(robot.job == RobotJob.COAL_WORKER)
              gameWorld.robotApplicationService.findCoalPlanetOrLikeliestToContainCoalToMoveTo(robot)
          else

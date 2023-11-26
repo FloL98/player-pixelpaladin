@@ -1,9 +1,10 @@
-package thkoeln.dungeon.restadapter
+package thkoeln.dungeon.eventlistener.concreteevents.eventdtos
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import thkoeln.dungeon.domainprimitives.Inventory
+import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.PlanetShortDto
 import java.util.*
 
 

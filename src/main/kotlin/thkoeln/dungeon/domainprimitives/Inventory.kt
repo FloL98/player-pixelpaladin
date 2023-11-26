@@ -19,7 +19,7 @@ class Inventory {
         get() = resources.totalResourceAmount
     @get:JsonIgnore
     val full: Boolean
-        get() = maxStorage - usedStorage ==0
+        get() = maxStorage - usedStorage <= 0
     var storageLevel: Int = 0
     @Embedded
     var resources: InventoryResource = InventoryResource.emptyResource()

@@ -47,7 +47,7 @@ class RobotApplicationService@Autowired constructor(
 
     fun findRobotByRobotId(robotId: UUID): Robot?{
         logger.info("find robot start")
-        val robot = robotRepository.findByRobotId(robotId)
+        val robot = robotRepository.findById(robotId)
         logger.info("find robot end")
         return if(robot.isPresent)
             robot.get()
@@ -225,8 +225,8 @@ class RobotApplicationService@Autowired constructor(
         //return robots.filter { it.job == job }.toMutableList()
     }
 
-    // toDO überarbeiten, nimmt auch viel zeit ein
-    fun upgradeRobotsJobs(game: Game){
+    // should be deleted for better method below
+    fun upgradeRobotsJobs1(game: Game){
         val strategy = strategyService.getStrategyByGame(game)
         //Begrenzung, damit es nicht zu viele Job-upgrades gibt, aber keine Roboter mehr die Geld einbringen
         val allRobots = getAllRobots()
@@ -275,6 +275,38 @@ class RobotApplicationService@Autowired constructor(
                     possibleFighterRobots[i].job = RobotJob.FIGHTER
                     saveRobot(possibleFighterRobots[i])
                     logger.info("Changed one robot to fighter!")
+                }
+            }
+        }
+    }
+
+    fun upgradeRobotsJobs(game: Game) {
+        val strategy = strategyService.getStrategyByGame(game)
+        val allRobots = getAllRobots()
+
+        if (strategy.maxNumberOfRobots.toDouble() / allRobots.filter { it.job.isMiner() }.size.toDouble() < 1.25) {
+            val coalRobots = robotRepository.findByJob(RobotJob.COAL_WORKER).toMutableList()
+
+            val jobMapping = mapOf(
+                RobotJob.IRON_WORKER to strategy.maxNumberOfIronMiners,
+                RobotJob.GEM_WORKER to strategy.maxNumberOfGemMiners,
+                RobotJob.FIGHTER to strategy.maxNumberOfFighters
+            )
+
+            jobMapping.forEach { (targetJob, maxNumberOfJob) ->
+                val existingRobots = robotRepository.findByJob(targetJob).toMutableList()
+                val numberOfNewRobots = maxOf(0, maxNumberOfJob - existingRobots.size)
+
+                if (numberOfNewRobots > 0) {
+                    val possibleRobots = coalRobots.filter { it.inventory.usedStorage == 0 }
+                    val robotsToUpdate = possibleRobots.take(numberOfNewRobots)
+
+                    robotsToUpdate.forEach {
+                        coalRobots.remove(it)
+                        it.job = targetJob
+                        saveRobot(it)
+                        logger.info("Changed one robot to ${targetJob.name.lowercase()}!")
+                    }
                 }
             }
         }

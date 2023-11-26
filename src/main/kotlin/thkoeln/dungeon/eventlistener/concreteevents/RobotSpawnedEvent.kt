@@ -3,7 +3,7 @@ package thkoeln.dungeon.eventlistener.concreteevents
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import thkoeln.dungeon.eventlistener.AbstractEvent
-import thkoeln.dungeon.restadapter.RobotDto
+import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.RobotDto
 
 
 

@@ -33,7 +33,7 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
             // no planets yet. Assign (0,0) to this first one.
             Planet(newPlanetId)
         } else {
-            val foundOptional = planetRepository.findByPlanetId(newPlanetId)
+            val foundOptional = planetRepository.findById(newPlanetId)
             if (foundOptional.isPresent) {
                 // not sure if this can happen ... but just to make sure, all the same.
                 foundOptional.get()
@@ -41,12 +41,11 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
                 Planet(newPlanetId)
             }
         }
-        newPlanet.isSpaceStation = isSpaceStation
         planetRepository.save(newPlanet)
     }
 
     fun visitPlanetWithDifficulty(planetId: UUID, movementDifficulty: Int) {
-        val planet = planetRepository.findByPlanetId(planetId)
+        val planet = planetRepository.findById(planetId)
             .orElseThrow { PlanetException("Planet with UUID $planetId not found!") }
         planet.visited = true
         planet.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
@@ -61,7 +60,7 @@ class PlanetDomainService @Autowired constructor(private val planetRepository: P
 
     //direkt die objeke übergeben ansttatt uuids?
     fun addNeighbourToPlanet(planet: Planet, neighbourId: UUID, direction: CompassDirection) {
-        val neighbourOpt = planetRepository.findByPlanetId(neighbourId)
+        val neighbourOpt = planetRepository.findById(neighbourId)
         val neighbour = if (neighbourOpt.isPresent) neighbourOpt.get() else Planet(neighbourId)
         //neighbour.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
         planet.defineNeighbour(neighbour, direction)

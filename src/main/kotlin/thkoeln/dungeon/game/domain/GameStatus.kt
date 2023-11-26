@@ -2,7 +2,7 @@ package thkoeln.dungeon.game.domain
 
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.google.gson.annotations.SerializedName
+
 
 
 enum class GameStatus {

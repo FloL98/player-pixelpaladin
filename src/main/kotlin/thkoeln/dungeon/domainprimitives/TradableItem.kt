@@ -3,9 +3,6 @@ package thkoeln.dungeon.domainprimitives
 import jakarta.persistence.Embeddable
 import jakarta.persistence.Embedded
 import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.TradableItemDto
-import thkoeln.dungeon.planet.domain.Planet
-import thkoeln.dungeon.restadapter.RobotDto
-import thkoeln.dungeon.robot.domain.Robot
 
 
 /**

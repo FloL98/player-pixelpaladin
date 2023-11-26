@@ -7,7 +7,7 @@ import thkoeln.dungeon.game.domain.Game
 import java.util.*
 
 @Entity
-class Strategy(){
+class Strategy{
 
     @Id
     val id: UUID = UUID.randomUUID()

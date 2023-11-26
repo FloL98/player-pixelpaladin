@@ -181,11 +181,6 @@ class PlayerApplicationService @Autowired constructor(
 
             if(numOfNewRobots > 0) {
                 val command = Command().createRobotPurchaseCommand(player.playerId!!,numOfNewRobots)
-                /*val commandObject = CommandObject(
-                    null, null, null, "ROBOT", numOfNewRobots
-                )
-                val command = Command(player.playerId!!, CommandType.BUYING.stringValue)
-                command.commandObject = commandObject*/
                 gameServiceRESTAdapter.sendPostRequestForCommand(command)
                 logger.info("$numOfNewRobots Robots were bought!")
             }
@@ -194,10 +189,5 @@ class PlayerApplicationService @Autowired constructor(
     }
 
 
-    fun letRobotsPlayRound(){
-        val player = queryAndIfNeededCreatePlayer()
-        val currentGame = gameApplicationService.queryRunningGame()
-                .orElseThrow { RobotApplicationException("Robots cant take action without running game!") }
-        robotStrategyService.commandRobotsToTakeAction(player,currentGame)
-    }
+
 }

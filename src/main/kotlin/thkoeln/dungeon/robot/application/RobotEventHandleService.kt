@@ -8,6 +8,7 @@ import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.MovementDifficulty
 import thkoeln.dungeon.domainprimitives.UpgradeType
@@ -30,265 +31,200 @@ class RobotEventHandleService @Autowired constructor(
     private val robotRepository: RobotRepository,
     private val enemyRobotRepository: EnemyRobotRepository,
     private val planetApplicationService: PlanetApplicationService,
-    private val planetDomainService: PlanetDomainService,
     private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(GameServiceRESTAdapter::class.java)
-    private var modelMapper = ModelMapper()
+    private val objectMapper = ObjectMapper()
 
 
 
-    fun handleRobotRevealedIntegrationEvent(robotsRevealedEvent: RobotsRevealedEvent){
+    fun handleRobotRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
         val revealedRobots = robotsRevealedEvent.robots//.map { EnemyRobot().createFromRevealedRobotDto(it) }
-        val robotIds = robotRepository.findAll().map{it.robotId}
-        val enemyRobotList= revealedRobots.filter{it.robotId !in robotIds}.map { EnemyRobot().createFromRevealedRobotDto(it) }
-        enemyRobotRepository.saveAll(enemyRobotList)
-        //val robotsToDelete = enemyRobotRepository.findAll().filter { it !in enemyRobotList }
-        //enemyRobotRepository.deleteAll(robotsToDelete)
+        /*val robotIds = robotRepository.findAll().map{it.robotId}
+        val enemyRobotList= revealedRobots.filter{it.robotId !in robotIds}.map { EnemyRobot().createFromRevealedRobotDto(it) }*/
 
-        //experimentell (not actually sure ob Befehl 100% funktioniert)
+        val robotIds = robotRepository.findAll().map { it.robotId }.toSet()
+        val enemyRobotList = revealedRobots
+            .filter { it.robotId !in robotIds }
+            .map { EnemyRobot().createFromRevealedRobotDto(it) }
+
+        enemyRobotRepository.saveAll(enemyRobotList)
         enemyRobotRepository.deleteAllNotInList(enemyRobotList)
         logger.info("Enemy robot count: ${enemyRobotRepository.count()}")
     }
 
 
 
-
-
-
+    //Wann kommt das Event überhaupt?
     suspend fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
-        changeRobotHealthToAmount(robotHealthUpdatedEvent.robotId, robotHealthUpdatedEvent.health)
+        val mutex = entityLockService.robotLocks.computeIfAbsent(robotHealthUpdatedEvent.robotId) { Mutex() }
+        mutex.withLock {
+            val robot = robotRepository.findById(robotHealthUpdatedEvent.robotId).orElseThrow {
+                RobotApplicationException("Couldnt change robot health because robot doesnt exist") }
+            robot.health += robotHealthUpdatedEvent.amount
+            robotRepository.save(robot)
+            logger.info("Robot $robot successfully changed his energy to ${robot.health}!")
+        }
     }
 
     private suspend fun changeRobotHealthToAmount(robotId: UUID, healthAmount: Int){
-        val mutex = entityLockService.robotLocks.computeIfAbsent(robotId) { Mutex() }
 
-        mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotId)
-                .orElseThrow { RobotApplicationException("Couldnt change robot health because robot doesnt exist") }
-            robot.health = healthAmount
-            robotRepository.save(robot)
-            logger.info("Robot $robot successfully changed his energy to $healthAmount!")
+
+    }
+
+
+    suspend fun handleRobotMovedEvent(robotMovedEvent: RobotMovedEvent){
+        val robotMutex = entityLockService.robotLocks.computeIfAbsent(robotMovedEvent.robotId) { Mutex() }
+        robotMutex.withLock {
+            val planetMutex = entityLockService.planetLocks.computeIfAbsent(robotMovedEvent.toPlanet.planetId) { Mutex() }
+            planetMutex.withLock {
+            val robot = robotRepository.findById(robotMovedEvent.robotId).orElseThrow {
+                RobotApplicationException("Couldnt change robot position because robot doesnt exist") }
+                val newPlanetPosition = planetApplicationService.findByPlanetId(robotMovedEvent.toPlanet.planetId)
+                robot.planet = newPlanetPosition
+                robot.energy = robotMovedEvent.remainingEnergy
+                robot.moveHistory.add(robotMovedEvent.fromPlanet.planetId)
+                robotRepository.save(robot)
+                logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
+            }
         }
 
     }
 
 
-    suspend fun handleRobotMovedIntegrationEvent(robotMovedEvent: RobotMovedEvent){
-        val mutex = entityLockService.robotLocks.computeIfAbsent(robotMovedEvent.robotId) { Mutex() }
-        mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotMovedEvent.robotId)
-                .orElseThrow { RobotApplicationException("Couldnt change robot position because robot doesnt exist") }
-            val newPlanetPosition = planetApplicationService.findByPlanetId(robotMovedEvent.toPlanet.planetId)
-            robot.planet = newPlanetPosition
-            robot.energy = robotMovedEvent.remainingEnergy
-            planetDomainService.visitPlanet(newPlanetPosition)
-            robot.moveHistory.add(robotMovedEvent.fromPlanet.planetId)
-
-            robotRepository.save(robot)
-        }
-        //logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
-    }
-
-
-    fun handleRobotAttackedIntegrationEvent(robotAttackedEvent: RobotAttackedEvent) {
+    suspend fun handleRobotAttackedEvent(robotAttackedEvent: RobotAttackedEvent) {
         fun updateRobot(robot: Robot?, robotFightResultDto: RobotFightResultDto) {
             robot?.apply {
                 health = robotFightResultDto.availableHealth
                 energy = robotFightResultDto.availableEnergy
                 alive = robotFightResultDto.alive
                 robotRepository.save(this)
-            } ?: enemyRobotRepository.findByRobotId(robotFightResultDto.robotId).ifPresent {
+            } ?: enemyRobotRepository.findById(robotFightResultDto.robotId).ifPresent {
                 it.health = robotFightResultDto.availableHealth
                 it.energy = robotFightResultDto.availableEnergy
                 it.alive = robotFightResultDto.alive
                 enemyRobotRepository.save(it)
             }
         }
-        updateRobot(robotRepository.findByRobotId(robotAttackedEvent.attacker.robotId).orElse(null), robotAttackedEvent.attacker)
-        updateRobot(robotRepository.findByRobotId(robotAttackedEvent.target.robotId).orElse(null), robotAttackedEvent.target)
+        val mutexAttacker = entityLockService.robotLocks.computeIfAbsent(robotAttackedEvent.attacker.robotId) { Mutex() }
+        val mutexTarget = entityLockService.robotLocks.computeIfAbsent(robotAttackedEvent.target.robotId) { Mutex() }
+        mutexAttacker.withLock {
+            updateRobot(
+                robotRepository.findById(robotAttackedEvent.attacker.robotId).orElse(null), robotAttackedEvent.attacker)
+        }
+        mutexTarget.withLock {
+            updateRobot(robotRepository.findById(robotAttackedEvent.target.robotId).orElse(null), robotAttackedEvent.target)
+        }
     }
 
-    //toDO() renew this method maybe?
-    fun handleRobotAttackedIntegrationEvent1(robotAttackedEvent: RobotAttackedEvent){
-        val attackerOptional =  robotRepository.findByRobotId(robotAttackedEvent.attacker.robotId)
-        val targetOptional =  robotRepository.findByRobotId(robotAttackedEvent.target.robotId)
-        if(attackerOptional.isPresent){
-            val attacker = attackerOptional.get()
-            attacker.health = robotAttackedEvent.attacker.availableHealth
-            attacker.energy = robotAttackedEvent.attacker.availableEnergy
-            attacker.alive = robotAttackedEvent.attacker.alive
-            robotRepository.save(attacker)
-        }
-        else{
-            val attacker = enemyRobotRepository.findByRobotId(robotAttackedEvent.attacker.robotId).get()
-            attacker.health = robotAttackedEvent.attacker.availableHealth
-            attacker.energy = robotAttackedEvent.attacker.availableEnergy
-            attacker.alive = robotAttackedEvent.attacker.alive
-            enemyRobotRepository.save(attacker)
 
-        }
-        if(targetOptional.isPresent){
-            val target = targetOptional.get()
-            target.health = robotAttackedEvent.target.availableHealth
-            target.energy = robotAttackedEvent.target.availableEnergy
-            target.alive = robotAttackedEvent.target.alive
-            robotRepository.save(target)
-        }
-        else{
-            val target = enemyRobotRepository.findByRobotId(robotAttackedEvent.attacker.robotId).get()
-            target.health = robotAttackedEvent.attacker.availableHealth
-            target.energy = robotAttackedEvent.attacker.availableEnergy
-            target.alive = robotAttackedEvent.attacker.alive
-            enemyRobotRepository.save(target)
 
-        }
-        /*if(attackerOptional.isPresent){
-            val attacker = attackerOptional.get()
-            if(robotAttackedEvent.attacker.alive){
-                attacker.health = robotAttackedEvent.attacker.availableHealth
-                attacker.energy = robotAttackedEvent.attacker.availableEnergy
-            }
-            else {
-                robotRepository.removeRobotByRobotId(attacker.robotId)
-                logger.info("Removed robot because it died.")
-            }
-        }
-        if(targetOptional.isPresent){
-            val target = targetOptional.get()
-            if(robotAttackedEvent.target.alive){
-                target.health = robotAttackedEvent.target.availableHealth
-                target.energy = robotAttackedEvent.target.availableEnergy
-            }
-            else {
-                robotRepository.removeRobotByRobotId(target.robotId)
-                logger.info("Removed robot because it died.")
-            }
-        }*/
-    }
-    suspend fun handleRobotUpgradedIntegrationEvent(robotUpgradedEvent: RobotUpgradedEvent){
+    suspend fun handleRobotUpgradedEvent(robotUpgradedEvent: RobotUpgradedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotUpgradedEvent.robotId) { Mutex() }
         mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotUpgradedEvent.robotId)
-                .orElseThrow { RobotApplicationException("Couldnt upgrade robot because robot doesnt exist") }
-            /*hier eventuell bessere Lösung möglich als jedes Attribut einzeln abzufragen?
-            oder einfach  modelMapper.map(robotUpgradedIntegrationEvent.robot, robot) //außer id
-            needs to be fixed*/
+            val robot = robotRepository.findById(robotUpgradedEvent.robotId).orElseThrow {
+                RobotApplicationException("Couldnt upgrade robot because robot doesnt exist") }
             when (robotUpgradedEvent.upgradeType) {
                 UpgradeType.STORAGE -> {
-                    robot.inventory.storageLevel = robotUpgradedEvent.level
-                    robot.inventory.maxStorage = robotUpgradedEvent.robot.inventory.maxStorage
+                    robot.upgradeStorage(robotUpgradedEvent.level, robotUpgradedEvent.robot.inventory.maxStorage)
                 }
-
                 UpgradeType.HEALTH -> {
-                    robot.healthLevel = robotUpgradedEvent.level
-                    robot.health = robotUpgradedEvent.robot.health
+                    robot.upgradeHealth(robotUpgradedEvent.level, robotUpgradedEvent.robot.health)
                 }
-
                 UpgradeType.DAMAGE -> {
-                    robot.damageLevel = robotUpgradedEvent.level
-                    robot.attackDamage = robotUpgradedEvent.robot.attackDamage
+                    robot.upgradeDamage(robotUpgradedEvent.level, robotUpgradedEvent.robot.attackDamage)
                 }
-
                 UpgradeType.MINING_SPEED -> {
-                    robot.miningSpeedLevel = robotUpgradedEvent.level
-                    robot.miningSpeed = robotUpgradedEvent.robot.miningSpeed
+                    robot.upgradeMiningspeed(robotUpgradedEvent.level, robotUpgradedEvent.robot.miningSpeed)
                 }
-
                 UpgradeType.MINING -> {
-                    robot.miningLevel = robotUpgradedEvent.level
+                    robot.upgradeMining(robotUpgradedEvent.level)
                 }
-
                 UpgradeType.MAX_ENERGY -> {
-                    robot.energyLevel = robotUpgradedEvent.level
-                    robot.maxEnergy = robotUpgradedEvent.robot.maxEnergy
+                    robot.upgradeMaxEnergy(robotUpgradedEvent.level, robotUpgradedEvent.robot.maxEnergy)
                 }
-
                 UpgradeType.ENERGY_REGEN -> {
-                    robot.energyRegenLevel = robotUpgradedEvent.level
-                    robot.energyRegen = robotUpgradedEvent.robot.energyRegen
-                }
-
-                else -> {
-                    logger.info("Couldnt find a suitable type to upgrade robot!")
+                    robot.upgradeEnergyRegen(robotUpgradedEvent.level, robotUpgradedEvent.robot.energyRegen)
                 }
             }
             robotRepository.save(robot)
             logger.info("Upgraded robots ${robotUpgradedEvent.upgradeType} to level ${robotUpgradedEvent.level}!")
         }
     }
-    suspend fun handleRobotRegeneratedIntegrationEvent(robotRegeneratedEvent: RobotRegeneratedEvent){
+    suspend fun handleRobotRegeneratedEvent(robotRegeneratedEvent: RobotRegeneratedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotRegeneratedEvent.robotId) { Mutex() }
         mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotRegeneratedEvent.robotId)
-                .orElseThrow { RobotApplicationException("Couldnt change robot energy because robot doesnt exist") }
+            val robot = robotRepository.findById(robotRegeneratedEvent.robotId).orElseThrow {
+                RobotApplicationException("Couldnt change robot energy because robot doesnt exist")
+            }
             robot.energy = robotRegeneratedEvent.availableEnergy
             robotRepository.save(robot)
+            logger.info("changed robot energy to ${robot.energy}")
         }
     }
+
+    @Transactional
     suspend fun handleRobotResourceMinedIntegrationEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceMinedEvent.robotId) { Mutex() }
         mutex.withLock {
-            logger.info("find robot start")
-            val robot = robotRepository.findByRobotId(robotResourceMinedEvent.robotId)
+            logger.info("findbyId robot start")
+            val robot = robotRepository.findById(robotResourceMinedEvent.robotId)
                 .orElseThrow { RobotApplicationException("Couldnt add to robot inventory because robot doesnt exist!") }
-            logger.info("find robot end")
-            robot.inventory.resources = robotResourceMinedEvent.resourceInventory
-            logger.info("save robot start")
+            logger.info("findbyId robot end")
+            val maxAddedAmount = robot.inventory.maxStorage - robot.inventory.usedStorage
+            val addedAmount: Int = minOf(robotResourceMinedEvent.minedAmount, maxAddedAmount)
+            robot.inventory.resources = robot.inventory.resources.addFromTypeAndAmount(
+                robotResourceMinedEvent.minedResource,
+                addedAmount
+            )
+            logger.info("save() robot start")
             robotRepository.save(robot)
-            logger.info("save robot end")
+            logger.info("save() robot end")
         }
     }
     suspend fun handleRobotResourceRemovedIntegrationEvent(robotResourceRemovedEvent: RobotResourceRemovedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceRemovedEvent.robotId) { Mutex() }
         mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotResourceRemovedEvent.robotId)
+            val robot = robotRepository.findById(robotResourceRemovedEvent.robotId)
                 .orElseThrow { RobotApplicationException("Couldnt remove from robot inventory because robot doesnt exist!") }
-            robot.inventory.resources = robotResourceRemovedEvent.resourceInventory
+            robot.inventory.resources = robot.inventory.resources.removeFromTypeAndAmount(
+                robotResourceRemovedEvent.removedResource,
+                robotResourceRemovedEvent.removedAmount
+            )
             robotRepository.save(robot)
-            logger.info("change resources ${robotResourceRemovedEvent.removedResource}")
         }
     }
     suspend fun handleRobotRestoredAttributesIntegrationEvent(robotRestoredAttributesEvent: RobotRestoredAttributesEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotRestoredAttributesEvent.robotId) { Mutex() }
         mutex.withLock {
-            val robot = robotRepository.findByRobotId(robotRestoredAttributesEvent.robotId)
+            val robot = robotRepository.findById(robotRestoredAttributesEvent.robotId)
                 .orElseThrow { RobotApplicationException("Couldnt restore robot attribute because robot doesnt exist") }
             robot.energy = robotRestoredAttributesEvent.availableEnergy
             robot.health = robotRestoredAttributesEvent.availableHealth
             robotRepository.save(robot)
-            logger.info("Robot $robot successfully restored his energy to ${robotRestoredAttributesEvent.availableEnergy}! or health to ${robotRestoredAttributesEvent.availableHealth}")
         }
     }
     suspend fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
-        //planet mutex?
+
         val planetMutex = entityLockService.planetLocks.computeIfAbsent(robotSpawnedEvent.robotDto.planetShortDto.planetId) { Mutex() }
         planetMutex.withLock {
             val planetOpt =
                 planetApplicationService.findByPlanetIdOpt(robotSpawnedEvent.robotDto.planetShortDto.planetId)
             val planet: Planet
-            val mapper = ObjectMapper()
             if (planetOpt.isEmpty) {
-                planet = mapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
+                planet = objectMapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
                 planet.movementDifficulty =
                     MovementDifficulty.fromInteger(robotSpawnedEvent.robotDto.planetShortDto.movementDifficulty)
-                planetApplicationService.registerPlanetIfNotExists(planet)
+                planetApplicationService.savePlanet(planet)
             } else
                 planet = planetOpt.get()
 
-            /*val mapper = ObjectMapper()
-        val planet = mapper.convertValue(robotSpawnedEvent.robotDto.planetShortDto, Planet::class.java)
+            val newRobot = objectMapper.convertValue(robotSpawnedEvent.robotDto, Robot::class.java)
+            newRobot.planet = planet
 
-        planet.movementDifficulty = MovementDifficulty.fromInteger(robotSpawnedEvent.robotDto.planetShortDto.movementDifficulty)*/
-
-
-            //planetApplicationService.registerPlanetIfNotExists(planet)
             val robotMutex = entityLockService.robotLocks.computeIfAbsent(robotSpawnedEvent.robotDto.robotId) { Mutex() }
             robotMutex.withLock {
-                val newRobot = mapper.convertValue(robotSpawnedEvent.robotDto, Robot::class.java)
-                newRobot.planet = planet//planetApplicationService.findByPlanetId(robotSpawnedEvent.robotDto.planetShortDto.planetId)
                 robotRepository.save(newRobot)
-                logger.info("Robot $newRobot successfully registered!")
             }
         }
     }

@@ -7,7 +7,7 @@ import org.springframework.boot.SpringApplication
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 
 
-@SpringBootApplication
+//@SpringBootApplication
 open class DungeonPlayerMainApplication : SpringBootServletInitializer()
 
 
