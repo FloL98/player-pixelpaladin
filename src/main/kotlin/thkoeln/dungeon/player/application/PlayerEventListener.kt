@@ -233,9 +233,6 @@ class PlayerEventListener @Autowired constructor(
 
     }
 
-    private fun handlePlanetDiscoveredEventThreadSafe(planetDiscoveredEvent: PlanetDiscoveredEvent){
-        planetApplicationService.handlePlanetDiscoveredEventThreadSafe(planetDiscoveredEvent,coroutineScope)
-    }
 
     private fun handleRobotsRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
         robotEventHandleService.handleRobotRevealedEvent(robotsRevealedEvent)
