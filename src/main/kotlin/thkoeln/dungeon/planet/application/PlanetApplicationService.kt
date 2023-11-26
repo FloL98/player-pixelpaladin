@@ -30,6 +30,20 @@ class PlanetApplicationService @Autowired constructor(
     private val logger = LoggerFactory.getLogger(PlanetApplicationService::class.java)
 
 
+    fun forTestingPurpose(){
+        logger.warn("TESTING: find all planets start")
+        val planets = planetRepository.findAll()
+        logger.warn("TESTING: find all planets end")
+        if(planets.isNotEmpty()) {
+            logger.warn("TESTING: find single planet start")
+            val planet = planetRepository.findById(planets.first.planetId).get()
+            logger.warn("TESTING: find single planet end")
+            logger.warn("TESTING: save single planet start")
+            planet.name = "test"
+            logger.warn("TESTING: save single planet end")
+        }
+    }
+
 
 
     suspend fun handlePlanetDiscoveredEventWithoutMerge(planetDiscoveredEvent: PlanetDiscoveredEvent) {

@@ -236,6 +236,7 @@ class PlayerEventListener @Autowired constructor(
 
     private fun handleRobotsRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
         robotEventHandleService.handleRobotRevealedEvent(robotsRevealedEvent)
+        planetApplicationService.forTestingPurpose()
         commandLatch.countDown()
         handleRobotsRevealedAndRoundStartedBothReady()
     }

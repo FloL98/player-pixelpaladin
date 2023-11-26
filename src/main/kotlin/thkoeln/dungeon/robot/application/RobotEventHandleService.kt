@@ -48,7 +48,10 @@ class RobotEventHandleService @Autowired constructor(
             .filter { it.robotId !in robotIds }
             .map { EnemyRobot().createFromRevealedRobotDto(it) }
 
-        enemyRobotRepository.saveAll(enemyRobotList)
+        if(enemyRobotList.isNotEmpty())
+            enemyRobotRepository.saveAll(enemyRobotList)
+        //if(enemyRobotList.isEmpty())
+        //    enemyRobotRepository.deleteAll()
         enemyRobotRepository.deleteAllNotInList(enemyRobotList)
         logger.info("Enemy robot count: ${enemyRobotRepository.count()}")
     }

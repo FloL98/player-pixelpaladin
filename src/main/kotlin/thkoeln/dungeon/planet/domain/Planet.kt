@@ -24,6 +24,9 @@ class Planet {
     @Id
     var planetId: UUID = UUID.randomUUID()
 
+    @JsonIgnore
+    var name : String = ""
+
 
     var visited: Boolean = false
 
