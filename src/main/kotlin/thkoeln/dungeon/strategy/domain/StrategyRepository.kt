@@ -5,6 +5,5 @@ import thkoeln.dungeon.game.domain.Game
 import java.util.*
 
 interface StrategyRepository : CrudRepository<Strategy, UUID> {
-
     fun findByGame(game: Game?): Optional<Strategy>
 }

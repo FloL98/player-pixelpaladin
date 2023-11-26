@@ -1,13 +1,9 @@
 package thkoeln.dungeon.player.application
 
 
-import kotlinx.coroutines.sync.Mutex
+
 import kotlinx.coroutines.sync.withLock
-import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
-import org.springframework.amqp.rabbit.connection.CachingConnectionFactory
-import org.springframework.amqp.rabbit.listener.AbstractMessageListenerContainer
-import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -21,10 +17,7 @@ import thkoeln.dungeon.game.application.GameApplicationService
 import thkoeln.dungeon.player.domain.Player
 import thkoeln.dungeon.player.domain.PlayerRepository
 import thkoeln.dungeon.restadapter.GameServiceRESTAdapter
-import thkoeln.dungeon.restadapter.PlayerRegistryDto
-import thkoeln.dungeon.robot.application.RobotApplicationException
 import thkoeln.dungeon.robot.application.RobotApplicationService
-import thkoeln.dungeon.robot.application.RobotStrategyService
 import thkoeln.dungeon.strategy.application.StrategyService
 import java.util.*
 
@@ -40,11 +33,9 @@ class PlayerApplicationService @Autowired constructor(
     private val gameServiceRESTAdapter: GameServiceRESTAdapter,
     private val robotApplicationService: RobotApplicationService,
     private val strategyService: StrategyService,
-    private val robotStrategyService: RobotStrategyService,
     private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(PlayerApplicationService::class.java)
-    private val modelMapper = ModelMapper()
 
     @Value("\${dungeon.playerName}")
     private val playerName: String? = null

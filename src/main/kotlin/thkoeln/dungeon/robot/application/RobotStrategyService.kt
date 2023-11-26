@@ -36,9 +36,9 @@ class RobotStrategyService@Autowired constructor(
 
     private var commandList: MutableList<Command> = ArrayList<Command>()
 
+    //maybe this one is more usable later when trying to fill commandlist in parallel
     /*fun fillCommandList(player: Player?, currentGame: Game){
         val robots: List<Robot> = robotApplicationService.getAllRobots()
-        logger.info("${robots.size} robots currently exists!")
         for(robot in robots){
             val command = findOptimalRobotAction(robot, player!!, currentGame)
             //val command = findOptimalRobotActionExperimental(robot, player!!, currentGame)
@@ -46,8 +46,6 @@ class RobotStrategyService@Autowired constructor(
                 commandList.add(command)
             }
         }
-
-        logger.info("Done with filling command list!")
     }*/
 
     fun fillCommandList(player: Player?, currentGame: Game){
@@ -57,17 +55,6 @@ class RobotStrategyService@Autowired constructor(
         this.commandList = commandListNew
     }
 
-    fun executeCommandListNotParallel(){
-        var counter = 0
-        for(command in commandList) {
-            gameServiceRESTAdapter.sendPostRequestForCommand(command)
-            logger.info("http command $counter successful")
-            counter++
-            if(counter == commandList.size){
-                logger.info("Reached last element of http command list!!")
-            }
-        }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun executeCommandListParallel() {

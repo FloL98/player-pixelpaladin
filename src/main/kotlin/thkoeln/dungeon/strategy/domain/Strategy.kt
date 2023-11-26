@@ -25,7 +25,7 @@ class Strategy{
     @AttributeOverride(name="amount", column=Column(name="budgetForRobots_amount"))
     var budgetForRobots: Moneten = Moneten.fromInteger(0)
 
-    var maxNumberOfRobots: Int = 100
+    var maxNumberOfRobots: Int = 150
 
     @Embedded
     @AttributeOverride(name="amount", column=Column(name="totalBalance_amount"))

@@ -4,19 +4,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="cleaning up code #4 + fixed @Transactional annotation issues">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Inventory.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Inventory.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/InventoryResource.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/InventoryResource.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/ShortestPathCalculator.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/ShortestPathCalculator.kt" afterDir="false" />
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="cleaning up code #5 + fixes">
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetPathFinder.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetRepository.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterUpgradeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterUpgradeStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FleeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FleeStrategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerAttackStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerAttackStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerUpgradeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerUpgradeStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,7 +171,7 @@
       <workItem from="1700821037090" duration="24910000" />
       <workItem from="1700912367920" duration="42974000" />
       <workItem from="1700995452390" duration="1116000" />
-      <workItem from="1700996759515" duration="37132000" />
+      <workItem from="1700996759515" duration="37748000" />
     </task>
     <task id="LOCAL-00001" summary="initial fixes">
       <option name="closed" value="true" />
@@ -249,7 +253,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701014624815</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="cleaning up code #5 + fixes">
+      <option name="closed" value="true" />
+      <created>1701036947898</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1701036947898</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -277,7 +289,8 @@
     <MESSAGE value="cleaning up code #2" />
     <MESSAGE value="cleaning up code #3 + changed database" />
     <MESSAGE value="cleaning up code #4 + fixed @Transactional annotation issues" />
-    <option name="LAST_COMMIT_MESSAGE" value="cleaning up code #4 + fixed @Transactional annotation issues" />
+    <MESSAGE value="cleaning up code #5 + fixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="cleaning up code #5 + fixes" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

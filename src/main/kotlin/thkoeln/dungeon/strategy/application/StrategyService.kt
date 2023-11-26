@@ -117,9 +117,7 @@ class StrategyService@Autowired constructor(
     }
 
     private fun updateNumberOfDifferentRobotsJobs(strategy: Strategy){
-        val currentRound = strategy.game?.currentRoundNumber!!
-        var maxRounds = strategy.game?.maxRounds!!
-        when(currentRound){
+        when(val currentRound = strategy.game?.currentRoundNumber!!){
             in 0..50 -> {
             }
             in 50..100-> {
@@ -156,26 +154,6 @@ class StrategyService@Autowired constructor(
         strategyRepository.save(strategy)
     }
 
-
-
-    /*fun updateMaxLevels(strategy: Strategy){
-        when(strategy.budgetForMiningUpgrades.amount){
-            in 0..15000 -> strategy.currentMinerMaxLevels = 2
-            in 15000..30000 -> strategy.currentMinerMaxLevels = 3
-            in 30000 .. 70000 -> strategy.currentMinerMaxLevels = 4
-            in 70000 .. Int.MAX_VALUE -> strategy.currentMinerMaxLevels = 5
-            else -> throw StrategyException("Budget for mining upgrades cannot be negative!")
-        }
-
-        when(strategy.budgetForFightingUpgrades.amount){
-            in 0..15000 -> strategy.currentFighterMaxLevels = 2
-            in 15000..30000 -> strategy.currentFighterMaxLevels = 3
-            in 30000 .. 70000 -> strategy.currentFighterMaxLevels = 4
-            in 70000 .. Int.MAX_VALUE -> strategy.currentFighterMaxLevels = 5
-            else -> throw StrategyException("Budget for fighting uprgrades cannot be negative!")
-        }
-        strategyRepository.save(strategy)
-    }*/
 
     fun deleteAllStrategies(){
         strategyRepository.deleteAll()
