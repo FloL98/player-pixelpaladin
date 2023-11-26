@@ -80,11 +80,13 @@ class PlayerEventListener @Autowired constructor(
         message: Message
     ) {
 
+        if(type== "error" || type == "RoundStatus" || type == "GameStatus" || type == "RobotUpgraded" ||type == "RobotResourceRemoved" || type == "RobotResourceMined") {
             logger.info(
                 """${environment.getProperty("ANSI_BLUE")}====> received event ... 
 	 {type=$type, eventId=$eventIdStr, transactionId=$transactionIdStr, playerId=$playerIdStr, version=$version, timestamp=${timestampStr}
 	$payload${environment.getProperty("ANSI_RESET")}"""
             )
+        }
 
 
             val eventHeader = EventHeader(type, eventIdStr, playerIdStr, transactionIdStr, timestampStr, version)
@@ -265,7 +267,6 @@ class PlayerEventListener @Autowired constructor(
         if(event.roundStatus == RoundStatusType.STARTED) {
             logger.info("----------------------------------------------\n----------------------------------------------\nROUND ${event.roundNumber} started!")
             logger.info("Balance: ${player.moneten.amount}")
-            robotApplicationService.removeAllDeadRobots()
             gameApplicationService.updateRoundCount(event.roundNumber)
             strategyService.updateStrategy(game, player.moneten, robotApplicationService.getTotalNumberOfRobots())
             robotApplicationService.upgradeRobotsJobs(game) //nimmt viel zeit ein
@@ -297,6 +298,7 @@ class PlayerEventListener @Autowired constructor(
         if(commandLatch.count == 0L){
             val player = playerApplicationService.queryAndIfNeededCreatePlayer()
             val game = gameApplicationService.queryActiveGame().get()
+            robotApplicationService.removeAllDeadRobots()
             robotStrategyService.fillCommandList(player,game)
             robotStrategyService.executeCommandListParallel()
         }

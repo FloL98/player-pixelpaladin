@@ -10,52 +10,72 @@ import thkoeln.dungeon.domainprimitives.CompassDirection
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import thkoeln.dungeon.domainprimitives.PlanetNeighbour
+import java.lang.reflect.InvocationTargetException
 
 /**
  * This service primarily aims at making sure that new planets our player learns about are properly connected to
  * each other, i.e. that a real interconnected map is created.
- * Please make sure not to use the PlanetRepository directly, but use the methods of this service instead.
  */
 @Service
 class PlanetDomainService @Autowired constructor(private val planetRepository: PlanetRepository) {
-    private val logger = LoggerFactory.getLogger(PlanetDomainService::class.java)
 
-    /**
-     * Add a new planet (may be space station) we learn about from an external event,
-     * without having any information about its neighbours. That could be e.g. when
-     * new space stations are declared.
-     * @param newPlanetId
-     */
-    fun addPlanetWithoutNeighbours(newPlanetId: UUID, isSpaceStation: Boolean) {
-        var newPlanet: Planet? = null
-        val foundPlanets = planetRepository.findAll()
-        newPlanet = if (foundPlanets.isEmpty()) {
-            // no planets yet. Assign (0,0) to this first one.
-            Planet(newPlanetId)
-        } else {
-            val foundOptional = planetRepository.findById(newPlanetId)
-            if (foundOptional.isPresent) {
-                // not sure if this can happen ... but just to make sure, all the same.
-                foundOptional.get()
-            } else {
-                Planet(newPlanetId)
+
+    fun addNeighbourToPlanet(planet: Planet, neighbourId: UUID, direction: CompassDirection) {
+        val neighbourOpt = planetRepository.findById(neighbourId)
+        val neighbour: Planet
+        if (neighbourOpt.isPresent)
+            neighbour =neighbourOpt.get()
+        else {
+            neighbour = Planet(neighbourId)
+            planetRepository.save(neighbour)
+        }
+        defineNeighbour(planet,neighbour, direction)
+
+    }
+
+    fun defineNeighbour(planet: Planet, otherPlanet: Planet?, direction: CompassDirection) {
+        try {
+            val otherGetter = planet.neighbouringGetter(direction.oppositeDirection)
+            val setter = planet.neighbouringSetter(direction)
+            setter.invoke(planet, otherPlanet)
+            val remoteNeighbour = otherGetter.invoke(otherPlanet) as Planet?
+            if (planet != remoteNeighbour) {
+                val otherSetter = planet.neighbouringSetter(direction.oppositeDirection)
+                otherSetter.invoke(otherPlanet, planet)
+            }
+        } catch (e: IllegalAccessException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        } catch (e: InvocationTargetException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        } catch (e: NoSuchMethodException) {
+            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
+        }
+
+        planetRepository.save(planet)
+        if(otherPlanet!=null)
+            planetRepository.save(otherPlanet)
+        closeNeighbouringCycleForAllDirectionsBut(planet,direction)
+
+    }
+
+    fun closeNeighbouringCycleForAllDirectionsBut(planet: Planet, notInThisDirection: CompassDirection)  {
+        for (compassDirection in CompassDirection.entries) {
+            if (compassDirection == notInThisDirection) continue
+            val neighbour = planet.getNeighbour(compassDirection)
+            if (neighbour != null) {
+                for (ninetyDegrees in compassDirection.ninetyDegrees()) {
+                    if (planet.getNeighbour(ninetyDegrees) != null && neighbour.getNeighbour(ninetyDegrees) != null && planet.getNeighbour(
+                            ninetyDegrees
+                        )!!.getNeighbour(compassDirection) == null
+                    ) {
+                        defineNeighbour(planet.getNeighbour(ninetyDegrees)!!,
+                            neighbour.getNeighbour(ninetyDegrees), compassDirection
+                        )
+                    }
+                }
             }
         }
-        planetRepository.save(newPlanet)
     }
-
-    fun visitPlanetWithDifficulty(planetId: UUID, movementDifficulty: Int) {
-        val planet = planetRepository.findById(planetId)
-            .orElseThrow { PlanetException("Planet with UUID $planetId not found!") }
-        planet.visited = true
-        planet.movementDifficulty = MovementDifficulty.fromInteger(movementDifficulty)
-        planetRepository.save(planet)
-    }
-    fun visitPlanet(planet: Planet) {
-        planet.visited = true
-        planetRepository.save(planet)
-    }
-
 
 
 }

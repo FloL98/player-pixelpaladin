@@ -9,7 +9,6 @@ import java.util.UUID
 import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.domainprimitives.Inventory
 import thkoeln.dungeon.domainprimitives.MineableResourceType
-import thkoeln.dungeon.domainprimitives.UpgradeType
 import thkoeln.dungeon.planet.domain.Planet
 import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.RobotDto
 
@@ -101,8 +100,9 @@ class Robot(
     }
 
     fun upgradeStorage(storageLevel: Int, maxStorage: Int){
-        this.inventory.storageLevel = storageLevel
-        this.inventory.maxStorage = maxStorage
+        this.inventory = Inventory.fromMaxStorageAndAmountsAndStorageLevel(maxStorage,this.inventory.resources,storageLevel)
+        //this.inventory.storageLevel = storageLevel
+        //this.inventory.maxStorage = maxStorage
     }
 
     fun upgradeHealth(healthLevel: Int, health: Int){

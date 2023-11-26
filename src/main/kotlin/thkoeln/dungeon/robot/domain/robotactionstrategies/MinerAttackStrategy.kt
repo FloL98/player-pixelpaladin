@@ -11,7 +11,7 @@ class MinerAttackStrategy(val gameWorld: GameWorld, val game: Game, val robot: R
 
     override fun getCommand(): Command? {
         val enemyFound = gameWorld.robotApplicationService.getAllEnemyRobots().filter { it.planetId == robot.planet.planetId }
-        return if(enemyFound.size == 1 && robot.energy >= 1)
+        return if(enemyFound.size == 1 && robot.energy >= 1 && game.currentRoundNumber > 40)
             Command().createBattleCommand(player.playerId!!, robot.robotId, enemyFound[0].robotId)
         else null
     }

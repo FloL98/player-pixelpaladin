@@ -15,6 +15,7 @@ import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.eventlistener.concreteevents.PlanetDiscoveredEvent
 import thkoeln.dungeon.eventlistener.concreteevents.ResourceMinedEvent
+import thkoeln.dungeon.planet.domain.PlanetDomainService
 import thkoeln.dungeon.planet.domain.PlanetException
 import java.lang.reflect.InvocationTargetException
 import java.util.*
@@ -24,12 +25,12 @@ import kotlin.random.Random
 class PlanetApplicationService @Autowired constructor(
     private val planetRepository: PlanetRepository,
     private val entityLockService: EntityLockService,
+    private val planetDomainService: PlanetDomainService,
 ) {
     private val logger = LoggerFactory.getLogger(PlanetApplicationService::class.java)
 
 
     suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent) {
-        logger.info("planet discovered start")
         val planetVisited = planetRepository.findById(planetDiscoveredEvent.planetId)
             .map { it.visited }
             .orElse(false)
@@ -76,12 +77,11 @@ class PlanetApplicationService @Autowired constructor(
                         if (!planet.visited) {
                             planet.visited = true
                             planetRepository.save(planet)
-                            logger.warn("add neighbors start")
                             for (neighbour in planetDiscoveredEvent.neighbours) {
-                                addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
+                                planetDomainService.addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
                             }
-                            logger.warn("add neighbors end")
-                        } else
+                        }
+                        else
                             planetRepository.save(planet)
 
                     } finally {
@@ -97,12 +97,11 @@ class PlanetApplicationService @Autowired constructor(
                         entityLockService.planetLocks.computeIfAbsent(it) { Mutex() }.unlock()
                     }
                     //wait to void deadlocks
-                    delay(Random.nextInt(10, 30).toLong())
+                    delay(Random.nextInt(20, 80).toLong())
                     yield()
                 }
             }
         }
-        logger.info("planet discovered end")
     }
 
 
@@ -121,7 +120,7 @@ class PlanetApplicationService @Autowired constructor(
     }
 
     @Transactional
-    suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
+    suspend fun handleResourceMinedEvent1(resourceMinedEvent: ResourceMinedEvent){
         val mutex = entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }
         mutex.withLock {
             logger.warn("findby planet start")
@@ -137,6 +136,30 @@ class PlanetApplicationService @Autowired constructor(
             }
         }
     }
+    @Transactional
+    suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
+        while(true) {
+            val locked = entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }.tryLock()
+            if(locked){
+                try {
+                    val planetOpt =
+                        planetRepository.findById(resourceMinedEvent.planetId)
+                    if (planetOpt.isPresent) {
+                        val planet = planetOpt.get()
+                        planet.mineableResource =
+                            planet.mineableResource?.decreaseBy(resourceMinedEvent.minedAmount)
+                        planetRepository.save(planet)
+                    }
+                }
+                finally{
+                    entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }.unlock()
+                }
+                break
+            }
+            else
+                yield()
+        }
+    }
 
     fun deleteAll(){
         planetRepository.deleteAll()
@@ -147,61 +170,4 @@ class PlanetApplicationService @Autowired constructor(
     }
 
 
-
-    fun addNeighbourToPlanet(planet: Planet, neighbourId: UUID, direction: CompassDirection) {
-        val neighbourOpt = planetRepository.findById(neighbourId)
-        val neighbour: Planet
-        if (neighbourOpt.isPresent)
-            neighbour =neighbourOpt.get()
-        else {
-            neighbour = Planet(neighbourId)
-            planetRepository.save(neighbour)
-        }
-        defineNeighbour(planet,neighbour, direction)
-
-    }
-
-    fun defineNeighbour(planet: Planet, otherPlanet: Planet?, direction: CompassDirection) {
-        try {
-            val otherGetter = planet.neighbouringGetter(direction.oppositeDirection)
-            val setter = planet.neighbouringSetter(direction)
-            setter.invoke(planet, otherPlanet)
-            val remoteNeighbour = otherGetter.invoke(otherPlanet) as Planet?
-            if (planet != remoteNeighbour) {
-                val otherSetter = planet.neighbouringSetter(direction.oppositeDirection)
-                otherSetter.invoke(otherPlanet, planet)
-            }
-        } catch (e: IllegalAccessException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        } catch (e: InvocationTargetException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        } catch (e: NoSuchMethodException) {
-            throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
-        }
-
-        planetRepository.save(planet)
-        if(otherPlanet!=null)
-            planetRepository.save(otherPlanet)
-        closeNeighbouringCycleForAllDirectionsBut(planet,direction)
-
-    }
-
-    fun closeNeighbouringCycleForAllDirectionsBut(planet: Planet, notInThisDirection: CompassDirection)  {
-        for (compassDirection in CompassDirection.entries) {
-            if (compassDirection == notInThisDirection) continue
-            val neighbour = planet.getNeighbour(compassDirection)
-            if (neighbour != null) {
-                for (ninetyDegrees in compassDirection.ninetyDegrees()) {
-                    if (planet.getNeighbour(ninetyDegrees) != null && neighbour.getNeighbour(ninetyDegrees) != null && planet.getNeighbour(
-                            ninetyDegrees
-                        )!!.getNeighbour(compassDirection) == null
-                    ) {
-                        defineNeighbour(planet.getNeighbour(ninetyDegrees)!!,
-                            neighbour.getNeighbour(ninetyDegrees), compassDirection
-                        )
-                    }
-                }
-            }
-        }
-    }
 }

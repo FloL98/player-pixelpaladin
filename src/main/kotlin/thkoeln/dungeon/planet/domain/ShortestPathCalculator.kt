@@ -30,7 +30,6 @@ class ShortestPathCalculator(var planets: List<Planet>) {
                     neighboursOfLastPlanet.add(lastPlanet.getNeighbour(direction)!!)
             }
 
-
             for (neighbor in neighboursOfLastPlanet) {
                 if (neighbor !in visited) {
                     val newPath = path.toMutableList()
@@ -98,13 +97,6 @@ class ShortestPathCalculator(var planets: List<Planet>) {
                 return path
             }
 
-            /*val neighboursOfLastPlanet = ArrayList<Planet>()
-            for(direction in CompassDirection.entries) {
-                if(lastPlanet.getNeighbour(direction) != null)
-                    neighboursOfLastPlanet.add(lastPlanet.getNeighbour(direction)!!)
-            }*/
-
-
             for (neighbor in lastPlanet.getAllNeighborsAsList()) {
                 if (neighbor !in visited) {
                     val newPath = path.toMutableList()
@@ -118,30 +110,4 @@ class ShortestPathCalculator(var planets: List<Planet>) {
         return null
     }
 
-    /**
-     * this function puts all neighbors/neighbor-attributes of a planet into a single list
-     */
-    fun convertNeighborsToList(planet: Planet): List<Planet>{
-        val neighbors = ArrayList<Planet>()
-        for(direction in CompassDirection.entries) {
-            if(planet.getNeighbour(direction) != null)
-                neighbors.add(planet.getNeighbour(direction)!!)
-        }
-        return neighbors
-    }
-
-
-
-    fun shortestPathToString(start: Planet, targetType: MineableResourceType): String {
-        val path = findShortestPathToType(start, targetType)
-        if (path == null)
-            return "null - no path found"
-        else {
-            var string = ""
-            for (planet in path) {
-                string += " ${planet.planetId}"
-            }
-            return string
-        }
-    }
 }

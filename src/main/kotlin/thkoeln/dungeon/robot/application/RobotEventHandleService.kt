@@ -83,7 +83,7 @@ class RobotEventHandleService @Autowired constructor(
                 if(robot.moveHistory.size > 10)
                     robot.moveHistory.removeFirst()
                 robotRepository.save(robot)
-                logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
+                //logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
             }
         }
 
@@ -96,20 +96,19 @@ class RobotEventHandleService @Autowired constructor(
             robot?.apply {
                 health = robotFightResultDto.availableHealth
                 energy = robotFightResultDto.availableEnergy
-                alive = robotFightResultDto.alive
+                alive = if(!this.alive) false else robotFightResultDto.alive
                 robotRepository.save(this)
             } ?: enemyRobotRepository.findById(robotFightResultDto.robotId).ifPresent {
                 it.health = robotFightResultDto.availableHealth
                 it.energy = robotFightResultDto.availableEnergy
-                it.alive = robotFightResultDto.alive
+                it.alive = if(!it.alive) false else robotFightResultDto.alive
                 enemyRobotRepository.save(it)
             }
         }
         val mutexAttacker = entityLockService.robotLocks.computeIfAbsent(robotAttackedEvent.attacker.robotId) { Mutex() }
         val mutexTarget = entityLockService.robotLocks.computeIfAbsent(robotAttackedEvent.target.robotId) { Mutex() }
         mutexAttacker.withLock {
-            updateRobot(
-                robotRepository.findById(robotAttackedEvent.attacker.robotId).orElse(null), robotAttackedEvent.attacker)
+            updateRobot(robotRepository.findById(robotAttackedEvent.attacker.robotId).orElse(null), robotAttackedEvent.attacker)
         }
         mutexTarget.withLock {
             updateRobot(robotRepository.findById(robotAttackedEvent.target.robotId).orElse(null), robotAttackedEvent.target)
@@ -161,7 +160,7 @@ class RobotEventHandleService @Autowired constructor(
             }
             robot.energy = robotRegeneratedEvent.availableEnergy
             robotRepository.save(robot)
-            logger.info("changed robot energy to ${robot.energy}")
+            //logger.info("changed robot energy to ${robot.energy}")
         }
     }
 
@@ -169,19 +168,18 @@ class RobotEventHandleService @Autowired constructor(
     suspend fun handleRobotResourceMinedEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceMinedEvent.robotId) { Mutex() }
         mutex.withLock {
-            logger.info("findbyId robot start")
             val robot = robotRepository.findById(robotResourceMinedEvent.robotId)
                 .orElseThrow { RobotApplicationException("Couldnt add to robot inventory because robot doesnt exist!") }
-            logger.info("findbyId robot end")
-            val maxAddedAmount = robot.inventory.maxStorage - robot.inventory.usedStorage
+            /*val maxAddedAmount = robot.inventory.maxStorage - robot.inventory.usedStorage
             val addedAmount: Int = minOf(robotResourceMinedEvent.minedAmount, maxAddedAmount)
             robot.inventory.resources = robot.inventory.resources.addFromTypeAndAmount(
                 robotResourceMinedEvent.minedResource,
                 addedAmount
-            )
-            logger.info("save() robot start")
+            )*/
+            val amountBefore = robot.inventory.usedStorage
+            robot.inventory = robot.inventory.fromNewResource(robotResourceMinedEvent.resourceInventory) //welche variante Reihenfolgeunabhängiger?
             robotRepository.save(robot)
-            logger.info("save() robot end")
+            logger.info("Robot resource mined +${robotResourceMinedEvent.minedAmount}, it has now: ${robot.inventory.usedStorage} from ${robot.inventory.maxStorage}. Before it had $amountBefore!!")
         }
     }
     @Transactional
@@ -190,11 +188,12 @@ class RobotEventHandleService @Autowired constructor(
         mutex.withLock {
             val robot = robotRepository.findById(robotResourceRemovedEvent.robotId)
                 .orElseThrow { RobotApplicationException("Couldnt remove from robot inventory because robot doesnt exist!") }
-            robot.inventory.resources = robot.inventory.resources.removeFromTypeAndAmount(
+            robot.inventory = robot.inventory.fromNewResource(robot.inventory.resources.removeFromTypeAndAmount(
                 robotResourceRemovedEvent.removedResource,
                 robotResourceRemovedEvent.removedAmount
-            )
+            ))
             robotRepository.save(robot)
+            logger.info("Robot inventory removed, it has now: ${robot.inventory.usedStorage} from ${robot.inventory.maxStorage}")
         }
     }
     @Transactional

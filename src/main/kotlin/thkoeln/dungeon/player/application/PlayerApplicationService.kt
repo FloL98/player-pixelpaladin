@@ -11,6 +11,7 @@ import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistry
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.*
 import thkoeln.dungeon.eventlistener.concreteevents.BankAccountTransactionBookedEvent
@@ -137,17 +138,19 @@ class PlayerApplicationService @Autowired constructor(
         adjustBankAccount(0)
     }
 
+    @Transactional
     suspend fun handleBankAccountTransactionBookedEvent(event: BankAccountTransactionBookedEvent){
         val playerMutex = entityLockService.playerLock
         playerMutex.withLock {
-            addToBankAccount(event.transactionAmount)
+            val player = queryAndIfNeededCreatePlayer()
+            player.moneten = player.moneten.increaseBy(event.transactionAmount)//newMoney
+            playerRepository.save(player)
         }
     }
 
     private fun addToBankAccount(amount: Int){
         logger.info("Added to bank account $amount")
         val player = queryAndIfNeededCreatePlayer()
-        //val newMoney = Moneten.fromInteger((amount+ player.moneten.amount))
         player.moneten = player.moneten.increaseBy(amount)//newMoney
         playerRepository.save(player)
     }

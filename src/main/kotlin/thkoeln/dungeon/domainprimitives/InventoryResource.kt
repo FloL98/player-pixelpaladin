@@ -9,30 +9,23 @@ import jakarta.persistence.Embeddable
  * Domain Primitive to represent the resources of an inventory
  */
 @Embeddable
-class InventoryResource {
+class InventoryResource(
     @JsonProperty("COAL")
-    var coal: Int = 0
+    val coal: Int,
     @JsonProperty("IRON")
-    var iron: Int = 0
+    val iron: Int,
     @JsonProperty("GEM")
-    var gem: Int = 0
+    val gem: Int,
     @JsonProperty("GOLD")
-    var gold: Int = 0
+    val gold: Int,
     @JsonProperty("PLATIN")
-    var platin: Int = 0
-
+    val platin: Int,
+    ) {
     @get:JsonIgnore
     val totalResourceAmount: Int
         get() = coal + iron + gem + gold + platin
 
-    private constructor(coal:Int, iron: Int, gem: Int, gold:Int, platin: Int){
-        this.coal = coal
-        this.iron = iron
-        this.gem = gem
-        this.gold = gold
-        this.platin = platin
-    }
-    constructor()
+
 
     fun addFromTypeAndAmount(type: MineableResourceType, amount: Int): InventoryResource{
         return when(type) {
