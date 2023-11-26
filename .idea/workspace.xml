@@ -4,13 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="cleaning up code #2">
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="cleaning up code #3 + changed database">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/MineableResource.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/MineableResource.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,7 +62,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Florian Lemmer/Desktop/pixelpaladin für maik/spieler 2 pixelpaladin/player-pixelpaladin3",
+    "last_opened_file_path": "C:/Users/Florian Lemmer/Desktop/pixelpaladin für maik/spieler 2 pixelpaladin/player-pixelpaladin2",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -161,7 +162,7 @@
       <workItem from="1700821037090" duration="24910000" />
       <workItem from="1700912367920" duration="42974000" />
       <workItem from="1700995452390" duration="1116000" />
-      <workItem from="1700996759515" duration="11675000" />
+      <workItem from="1700996759515" duration="16906000" />
     </task>
     <task id="LOCAL-00001" summary="initial fixes">
       <option name="closed" value="true" />
@@ -227,7 +228,15 @@
       <option name="project" value="LOCAL" />
       <updated>1701006092695</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="cleaning up code #3 + changed database">
+      <option name="closed" value="true" />
+      <created>1701009375309</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1701009375309</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -253,7 +262,8 @@
     <MESSAGE value="small fixes, added 2 new strategies" />
     <MESSAGE value="cleaning up code" />
     <MESSAGE value="cleaning up code #2" />
-    <option name="LAST_COMMIT_MESSAGE" value="cleaning up code #2" />
+    <MESSAGE value="cleaning up code #3 + changed database" />
+    <option name="LAST_COMMIT_MESSAGE" value="cleaning up code #3 + changed database" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

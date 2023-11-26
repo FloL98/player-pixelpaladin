@@ -22,10 +22,11 @@ class StrategyService@Autowired constructor(
 
     private val logger = LoggerFactory.getLogger(GameServiceRESTAdapter::class.java)
 
+
     fun createStrategyForGameIfNotExists(gameId: UUID?){
         val game = gameRepository.findByGameId(gameId!!).first()
         if(strategyRepository.findByGame(game).isEmpty) {
-            var strategy = Strategy()
+            val strategy = Strategy()
             strategy.game = game
             strategyRepository.save(strategy)
         }
@@ -94,13 +95,13 @@ class StrategyService@Autowired constructor(
             return quotient.toInt()
     }
 
+    //aktuell keine dynamische anpassung, sondern flat 150 damit player nicht crasht
     private fun updateMaxNumberOfRobots(strategy: Strategy){
         var currentRound = strategy.game?.currentRoundNumber!!
         //strategy.maxNumberOfRobots = 5 + (currentRound/2)
-        //testweise die maxnumber auf 300
-        strategy.maxNumberOfRobots = 100
-        if(strategy.maxNumberOfRobots> 100)
-            strategy.maxNumberOfRobots = 100
+        strategy.maxNumberOfRobots = 150
+        //if(strategy.maxNumberOfRobots> 150)
+            //strategy.maxNumberOfRobots = 150
         strategyRepository.save(strategy)
     }
 
@@ -134,13 +135,36 @@ class StrategyService@Autowired constructor(
         strategyRepository.save(strategy)
     }
 
-    fun updateMaxLevels(strategy: Strategy){
+
+
+    fun updateMaxLevels(strategy: Strategy) {
+        val BUDGET_TIER_1 = 15000
+        val BUDGET_TIER_2 = 30000
+        val BUDGET_TIER_3 = 70000
+
+        fun updateLevels(budget: Int): Int {
+            return when (budget) {
+                in 0..BUDGET_TIER_1 -> 2
+                in BUDGET_TIER_1 + 1..BUDGET_TIER_2 -> 3
+                in BUDGET_TIER_2 + 1..BUDGET_TIER_3 -> 4
+                in BUDGET_TIER_3 + 1..Int.MAX_VALUE -> 5
+                else -> throw StrategyException("Invalid budget: $budget")
+            }
+        }
+        strategy.currentMinerMaxLevels = updateLevels(strategy.budgetForMiningUpgrades.amount)
+        strategy.currentFighterMaxLevels = updateLevels(strategy.budgetForFightingUpgrades.amount)
+        strategyRepository.save(strategy)
+    }
+
+
+
+    /*fun updateMaxLevels(strategy: Strategy){
         when(strategy.budgetForMiningUpgrades.amount){
             in 0..15000 -> strategy.currentMinerMaxLevels = 2
             in 15000..30000 -> strategy.currentMinerMaxLevels = 3
             in 30000 .. 70000 -> strategy.currentMinerMaxLevels = 4
             in 70000 .. Int.MAX_VALUE -> strategy.currentMinerMaxLevels = 5
-            else -> throw StrategyException("Budget number cannot be negative!")
+            else -> throw StrategyException("Budget for mining upgrades cannot be negative!")
         }
 
         when(strategy.budgetForFightingUpgrades.amount){
@@ -148,10 +172,10 @@ class StrategyService@Autowired constructor(
             in 15000..30000 -> strategy.currentFighterMaxLevels = 3
             in 30000 .. 70000 -> strategy.currentFighterMaxLevels = 4
             in 70000 .. Int.MAX_VALUE -> strategy.currentFighterMaxLevels = 5
-            else -> throw StrategyException("Budget number cannot be negative!")
+            else -> throw StrategyException("Budget for fighting uprgrades cannot be negative!")
         }
         strategyRepository.save(strategy)
-    }
+    }*/
 
     fun deleteAllStrategies(){
         strategyRepository.deleteAll()

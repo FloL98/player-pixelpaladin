@@ -7,14 +7,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.*
 import org.apache.commons.text.WordUtils
-import org.slf4j.LoggerFactory
 import thkoeln.dungeon.domainprimitives.*
 import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.PlanetShortDto
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.*
-import kotlin.jvm.Transient
-
 
 @Entity
 @Table(indexes = [Index(columnList = "planetId")])
@@ -24,22 +21,18 @@ class Planet {
     @Id
     var planetId: UUID = UUID.randomUUID()
 
-    @JsonIgnore
-    var name : String = ""
-
-
     var visited: Boolean = false
 
-    @OneToOne//(cascade = [CascadeType.MERGE])
+    @OneToOne
     var northNeighbour: Planet? = null
 
-    @OneToOne//(cascade = [CascadeType.MERGE])
+    @OneToOne
     var eastNeighbour: Planet? = null
 
-    @OneToOne//(cascade = [CascadeType.MERGE])
+    @OneToOne
     var southNeighbour: Planet? = null
 
-    @OneToOne//(cascade = [CascadeType.MERGE])
+    @OneToOne
     var westNeighbour: Planet? = null
 
     @Embedded
@@ -56,9 +49,7 @@ class Planet {
     @JsonIgnore
     var movementDifficulty: MovementDifficulty = MovementDifficulty.fromInteger(1)
 
-
     var gameWorldId: UUID = UUID.randomUUID()
-
 
     constructor(planetId: UUID) {
         this.planetId = planetId

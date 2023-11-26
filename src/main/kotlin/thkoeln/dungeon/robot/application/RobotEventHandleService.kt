@@ -4,7 +4,6 @@ package thkoeln.dungeon.robot.application
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.modelmapper.ModelMapper
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -16,10 +15,8 @@ import thkoeln.dungeon.eventlistener.concreteevents.*
 import thkoeln.dungeon.eventlistener.concreteevents.eventdtos.RobotFightResultDto
 import thkoeln.dungeon.planet.application.PlanetApplicationService
 import thkoeln.dungeon.planet.domain.Planet
-import thkoeln.dungeon.planet.domain.PlanetDomainService
 import thkoeln.dungeon.restadapter.GameServiceRESTAdapter
 import thkoeln.dungeon.robot.domain.*
-import java.util.*
 
 
 /**
@@ -38,11 +35,9 @@ class RobotEventHandleService @Autowired constructor(
 
 
 
+    @Transactional
     fun handleRobotRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
-        val revealedRobots = robotsRevealedEvent.robots//.map { EnemyRobot().createFromRevealedRobotDto(it) }
-        /*val robotIds = robotRepository.findAll().map{it.robotId}
-        val enemyRobotList= revealedRobots.filter{it.robotId !in robotIds}.map { EnemyRobot().createFromRevealedRobotDto(it) }*/
-
+        val revealedRobots = robotsRevealedEvent.robots
         val robotIds = robotRepository.findAll().map { it.robotId }.toSet()
         val enemyRobotList = revealedRobots
             .filter { it.robotId !in robotIds }
@@ -50,15 +45,17 @@ class RobotEventHandleService @Autowired constructor(
 
         if(enemyRobotList.isNotEmpty())
             enemyRobotRepository.saveAll(enemyRobotList)
-        //if(enemyRobotList.isEmpty())
-        //    enemyRobotRepository.deleteAll()
-        enemyRobotRepository.deleteAllNotInList(enemyRobotList)
+        if(enemyRobotList.isEmpty())
+            enemyRobotRepository.deleteAll()
+        else
+            enemyRobotRepository.deleteAllNotInList(enemyRobotList)
         logger.info("Enemy robot count: ${enemyRobotRepository.count()}")
     }
 
 
 
     //Wann kommt das Event überhaupt?
+    @Transactional
     suspend fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotHealthUpdatedEvent.robotId) { Mutex() }
         mutex.withLock {
@@ -70,12 +67,8 @@ class RobotEventHandleService @Autowired constructor(
         }
     }
 
-    private suspend fun changeRobotHealthToAmount(robotId: UUID, healthAmount: Int){
 
-
-    }
-
-
+    @Transactional
     suspend fun handleRobotMovedEvent(robotMovedEvent: RobotMovedEvent){
         val robotMutex = entityLockService.robotLocks.computeIfAbsent(robotMovedEvent.robotId) { Mutex() }
         robotMutex.withLock {
@@ -97,6 +90,7 @@ class RobotEventHandleService @Autowired constructor(
     }
 
 
+    @Transactional
     suspend fun handleRobotAttackedEvent(robotAttackedEvent: RobotAttackedEvent) {
         fun updateRobot(robot: Robot?, robotFightResultDto: RobotFightResultDto) {
             robot?.apply {
@@ -124,6 +118,7 @@ class RobotEventHandleService @Autowired constructor(
 
 
 
+    @Transactional
     suspend fun handleRobotUpgradedEvent(robotUpgradedEvent: RobotUpgradedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotUpgradedEvent.robotId) { Mutex() }
         mutex.withLock {
@@ -156,6 +151,8 @@ class RobotEventHandleService @Autowired constructor(
             logger.info("Upgraded robots ${robotUpgradedEvent.upgradeType} to level ${robotUpgradedEvent.level}!")
         }
     }
+
+    @Transactional
     suspend fun handleRobotRegeneratedEvent(robotRegeneratedEvent: RobotRegeneratedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotRegeneratedEvent.robotId) { Mutex() }
         mutex.withLock {
@@ -169,7 +166,7 @@ class RobotEventHandleService @Autowired constructor(
     }
 
     @Transactional
-    suspend fun handleRobotResourceMinedIntegrationEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
+    suspend fun handleRobotResourceMinedEvent(robotResourceMinedEvent: RobotResourceMinedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceMinedEvent.robotId) { Mutex() }
         mutex.withLock {
             logger.info("findbyId robot start")
@@ -187,7 +184,8 @@ class RobotEventHandleService @Autowired constructor(
             logger.info("save() robot end")
         }
     }
-    suspend fun handleRobotResourceRemovedIntegrationEvent(robotResourceRemovedEvent: RobotResourceRemovedEvent){
+    @Transactional
+    suspend fun handleRobotResourceRemovedEvent(robotResourceRemovedEvent: RobotResourceRemovedEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotResourceRemovedEvent.robotId) { Mutex() }
         mutex.withLock {
             val robot = robotRepository.findById(robotResourceRemovedEvent.robotId)
@@ -199,7 +197,8 @@ class RobotEventHandleService @Autowired constructor(
             robotRepository.save(robot)
         }
     }
-    suspend fun handleRobotRestoredAttributesIntegrationEvent(robotRestoredAttributesEvent: RobotRestoredAttributesEvent){
+    @Transactional
+    suspend fun handleRobotRestoredAttributesEvent(robotRestoredAttributesEvent: RobotRestoredAttributesEvent){
         val mutex = entityLockService.robotLocks.computeIfAbsent(robotRestoredAttributesEvent.robotId) { Mutex() }
         mutex.withLock {
             val robot = robotRepository.findById(robotRestoredAttributesEvent.robotId)
@@ -209,8 +208,9 @@ class RobotEventHandleService @Autowired constructor(
             robotRepository.save(robot)
         }
     }
-    suspend fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
 
+    @Transactional
+    suspend fun handleRobotSpawnedEvent(robotSpawnedEvent: RobotSpawnedEvent){
         val planetMutex = entityLockService.planetLocks.computeIfAbsent(robotSpawnedEvent.robotDto.planetShortDto.planetId) { Mutex() }
         planetMutex.withLock {
             val planetOpt =

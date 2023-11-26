@@ -80,13 +80,11 @@ class PlayerEventListener @Autowired constructor(
         message: Message
     ) {
 
-            //if(type == "RoundStatus" ||type =="RobotsRevealed") {
             logger.info(
                 """${environment.getProperty("ANSI_BLUE")}====> received event ... 
 	 {type=$type, eventId=$eventIdStr, transactionId=$transactionIdStr, playerId=$playerIdStr, version=$version, timestamp=${timestampStr}
 	$payload${environment.getProperty("ANSI_RESET")}"""
             )
-            //}
 
 
             val eventHeader = EventHeader(type, eventIdStr, playerIdStr, transactionIdStr, timestampStr, version)
@@ -96,40 +94,29 @@ class PlayerEventListener @Autowired constructor(
                 return
             }
 
-
-
             if (playerIdStr == "public" || playerIdStr == playerApplicationService.queryAndIfNeededCreatePlayer().playerId.toString()) {
                 if (eventHeader.eventType.isRobotRelated) {
                     coroutineScope.launch {
-                        //logger.info("coroutine start")
                         handleRobotRelatedEvent(newEvent)
-                        //logger.info("coroutine end")
                     }
                 }
                 else if(eventHeader.eventType.isPlanetRelated){
                     coroutineScope.launch {
-                        logger.info("coroutine start")
                         handlePlanetRelatedEvent(newEvent)
-                        logger.info("coroutine end")
                     }
                 }
                 else if(eventHeader.eventType.isPlayerRelated){
                     coroutineScope.launch {
-                        //logger.info("coroutine start")
                         handleOtherEventParallel(newEvent)
-                        //logger.info("coroutine end")
                     }
                 }
                 //events werden nicht behandelt
                 else if(eventHeader.eventType.isNotImportant)
                 else {
-
                     runBlocking {
                         coroutineScope.coroutineContext.job.children.forEach { it.join() }
                     }
-                    //logger.info("start")
                     handleOtherEvent(newEvent)
-                    //logger.info("end")
                 }
             }
 
@@ -203,13 +190,13 @@ class PlayerEventListener @Autowired constructor(
         robotEventHandleService.handleRobotRegeneratedEvent(event)
     }
     private suspend fun handleRobotResourceMinedIntegrationEvent(event: RobotResourceMinedEvent){
-        robotEventHandleService.handleRobotResourceMinedIntegrationEvent(event)
+        robotEventHandleService.handleRobotResourceMinedEvent(event)
     }
     private suspend fun handleRobotResourceRemovedIntegrationEvent(event: RobotResourceRemovedEvent){
-        robotEventHandleService.handleRobotResourceRemovedIntegrationEvent(event)
+        robotEventHandleService.handleRobotResourceRemovedEvent(event)
     }
     private suspend fun handleRobotRestoredAttributesIntegrationEvent(event: RobotRestoredAttributesEvent){
-        robotEventHandleService.handleRobotRestoredAttributesIntegrationEvent(event)
+        robotEventHandleService.handleRobotRestoredAttributesEvent(event)
     }
     private suspend fun handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent: RobotHealthUpdatedEvent){
         robotEventHandleService.handleRobotHealthUpdatedEvent(robotHealthUpdatedEvent)
@@ -219,9 +206,8 @@ class PlayerEventListener @Autowired constructor(
         planetApplicationService.handleResourceMinedEvent(resourceMinedEvent)
     }
 
-
     private suspend fun handleRobotSpawnedIntegrationEvent(robotSpawnedEvent: RobotSpawnedEvent){
-        robotEventHandleService.handleRobotSpawnedIntegrationEvent(robotSpawnedEvent)
+        robotEventHandleService.handleRobotSpawnedEvent(robotSpawnedEvent)
     }
 
     private suspend fun handleBankAccountTransactionBookedEvent(bankAccountTransactionBookedEvent: BankAccountTransactionBookedEvent){
@@ -229,14 +215,13 @@ class PlayerEventListener @Autowired constructor(
     }
 
     private suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent){
-        planetApplicationService.handlePlanetDiscoveredEventWithoutMerge(planetDiscoveredEvent)
+        planetApplicationService.handlePlanetDiscoveredEvent(planetDiscoveredEvent)
 
     }
 
 
     private fun handleRobotsRevealedEvent(robotsRevealedEvent: RobotsRevealedEvent){
         robotEventHandleService.handleRobotRevealedEvent(robotsRevealedEvent)
-        planetApplicationService.forTestingPurpose()
         commandLatch.countDown()
         handleRobotsRevealedAndRoundStartedBothReady()
     }
@@ -258,7 +243,6 @@ class PlayerEventListener @Autowired constructor(
             robotApplicationService.resetEnemyRepository()
             playerApplicationService.updatePlayerIngameStatus(false)
             commandLatch = CountDownLatch(2)
-            //playerApplicationService.searchForOpenGameAndJoin()
         }
     }
 
@@ -287,7 +271,6 @@ class PlayerEventListener @Autowired constructor(
             robotApplicationService.upgradeRobotsJobs(game) //nimmt viel zeit ein
             playerApplicationService.buyRobots()
 
-
             commandLatch.countDown()
             handleRobotsRevealedAndRoundStartedBothReady()
 
@@ -295,16 +278,10 @@ class PlayerEventListener @Autowired constructor(
         else if(event.roundStatus == RoundStatusType.COMMAND_INPUT_ENDED){
             commandLatch = CountDownLatch(2)
             logger.info("Command-input ended")
-
         }
         else  if(event.roundStatus == RoundStatusType.ENDED){
             logger.info("Round ended")
-            //robotEventHandleService.resetCurrentEnemyList()
             robotStrategyService.clearCommandList()
-
-
-            //robotStrategyService.fillCommandList(player,game)
-
         }
 
     }
@@ -320,7 +297,6 @@ class PlayerEventListener @Autowired constructor(
         if(commandLatch.count == 0L){
             val player = playerApplicationService.queryAndIfNeededCreatePlayer()
             val game = gameApplicationService.queryActiveGame().get()
-            //robotStrategyService.fillCommandList(player,game)
             robotStrategyService.fillCommandList(player,game)
             robotStrategyService.executeCommandListParallel()
         }

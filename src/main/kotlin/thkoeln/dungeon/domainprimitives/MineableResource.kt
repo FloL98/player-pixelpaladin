@@ -14,9 +14,9 @@ class MineableResource (
     //spring jpa doesnt like embeddables with not-nullable types persisted in entities (mineableResource as embedded in Planet)
     //so these attributes have no be nullable, if not i would implement these as not nullable
     @JsonAlias("type")
-    var resourceType: MineableResourceType? ,
-    var currentAmount: Int? ,
-    var maxAmount: Int?
+    val resourceType: MineableResourceType? ,
+    val currentAmount: Int? ,
+    val maxAmount: Int?
 ){
 
 
@@ -25,9 +25,9 @@ class MineableResource (
             throw DomainPrimitiveException("Cannot decrease because attribute is null")
         else if(amount<0)
             throw DomainPrimitiveException("Amount < 0")
-        else if(this.currentAmount!! - amount <0)
+        else if(this.currentAmount - amount <0)
             throw DomainPrimitiveException("Amount cannot be decreased under 0")
-        return fromTypeAndAmount(this.resourceType!!,this.currentAmount!!-amount, this.maxAmount!!)
+        return fromTypeAndAmount(this.resourceType, this.currentAmount -amount, this.maxAmount)
     }
 
 

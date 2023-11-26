@@ -5,13 +5,12 @@ package thkoeln.dungeon.planet.application
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.modelmapper.ModelMapper
 import org.springframework.beans.factory.annotation.Autowired
 import thkoeln.dungeon.planet.domain.Planet
 import thkoeln.dungeon.planet.domain.PlanetRepository
-import thkoeln.dungeon.planet.domain.PlanetDomainService
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import thkoeln.dungeon.EntityLockService
 import thkoeln.dungeon.domainprimitives.CompassDirection
 import thkoeln.dungeon.eventlistener.concreteevents.PlanetDiscoveredEvent
@@ -24,29 +23,12 @@ import kotlin.random.Random
 @Service
 class PlanetApplicationService @Autowired constructor(
     private val planetRepository: PlanetRepository,
-    private val planetDomainService: PlanetDomainService,
     private val entityLockService: EntityLockService,
 ) {
     private val logger = LoggerFactory.getLogger(PlanetApplicationService::class.java)
 
 
-    fun forTestingPurpose(){
-        logger.warn("TESTING: find all planets start")
-        val planets = planetRepository.findAll()
-        logger.warn("TESTING: find all planets end")
-        if(planets.isNotEmpty()) {
-            logger.warn("TESTING: find single planet start")
-            val planet = planetRepository.findById(planets.first.planetId).get()
-            logger.warn("TESTING: find single planet end")
-            logger.warn("TESTING: save single planet start")
-            planet.name = "test"
-            logger.warn("TESTING: save single planet end")
-        }
-    }
-
-
-
-    suspend fun handlePlanetDiscoveredEventWithoutMerge(planetDiscoveredEvent: PlanetDiscoveredEvent) {
+    suspend fun handlePlanetDiscoveredEvent(planetDiscoveredEvent: PlanetDiscoveredEvent) {
         logger.info("planet discovered start")
         val planetVisited = planetRepository.findById(planetDiscoveredEvent.planetId)
             .map { it.visited }
@@ -66,7 +48,6 @@ class PlanetApplicationService @Autowired constructor(
                     }
                     planetIdsToLock.add(planetNeighbor.id)
                 }
-
 
                 //trying to get all locks
                 val planetIdsWhichsLockIsAquired: MutableList<UUID> = mutableListOf()
@@ -92,9 +73,9 @@ class PlanetApplicationService @Autowired constructor(
                             planet = planetOpt.get()
                             planet.mineableResource = planetDiscoveredEvent.mineableResource
                         }
-
                         if (!planet.visited) {
                             planet.visited = true
+                            planetRepository.save(planet)
                             logger.warn("add neighbors start")
                             for (neighbour in planetDiscoveredEvent.neighbours) {
                                 addNeighbourToPlanet(planet, neighbour.id, neighbour.direction)
@@ -139,6 +120,7 @@ class PlanetApplicationService @Autowired constructor(
         planetRepository.save(planet)
     }
 
+    @Transactional
     suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
         val mutex = entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }
         mutex.withLock {
@@ -197,33 +179,6 @@ class PlanetApplicationService @Autowired constructor(
             throw PlanetException("Something went wrong that should not have happened ..." + e.stackTrace)
         }
 
-        planetRepository.save(planet)
-        if(otherPlanet!=null)
-            planetRepository.save(otherPlanet)
-        closeNeighbouringCycleForAllDirectionsBut(planet,direction)
-
-    }
-    fun defineNeighbour1(planet: Planet, otherPlanet: Planet?, direction: CompassDirection) {
-        if(otherPlanet!=null){
-            when (direction) {
-                CompassDirection.NORTH -> {
-                    planet.northNeighbour = otherPlanet
-                    otherPlanet.southNeighbour = planet
-                }
-                CompassDirection.EAST -> {
-                    planet.eastNeighbour = otherPlanet
-                    otherPlanet.westNeighbour = planet
-                }
-                CompassDirection.SOUTH -> {
-                    planet.southNeighbour = otherPlanet
-                    otherPlanet.northNeighbour = planet
-                }
-                CompassDirection.WEST -> {
-                    planet.westNeighbour = otherPlanet
-                    otherPlanet.eastNeighbour = planet
-                }
-            }
-        }
         planetRepository.save(planet)
         if(otherPlanet!=null)
             planetRepository.save(otherPlanet)
