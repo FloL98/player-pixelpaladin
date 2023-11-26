@@ -84,6 +84,8 @@ class RobotEventHandleService @Autowired constructor(
                 robot.planet = newPlanetPosition
                 robot.energy = robotMovedEvent.remainingEnergy
                 robot.moveHistory.add(robotMovedEvent.fromPlanet.planetId)
+                if(robot.moveHistory.size > 10)
+                    robot.moveHistory.removeFirst()
                 robotRepository.save(robot)
                 logger.info("Robot $robot successfully changed Position to ${newPlanetPosition.planetId} and has now ${robot.energy} energy!")
             }

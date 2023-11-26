@@ -4,45 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="update helm chart version number to old number">
+    <list default="true" id="01fc36e3-3226-4b8b-a7dc-74eb21427f30" name="Changes" comment="added more parallelism, updated strategies, cleaned up code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/DungeonPlayerMainApplication.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/DungeonPlayerMainApplication.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/DungeonPlayerMainApplication1.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/DungeonPlayerMainApplication1.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Inventory.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/Inventory.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/InventoryResource.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/InventoryResource.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/TradableItem.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/domainprimitives/TradableItem.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/EventType.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/EventType.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/RobotSpawnedEvent.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/RobotSpawnedEvent.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/game/domain/GameStatus.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/game/domain/GameStatus.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/application/PlanetApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/Planet.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetDomainService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/planet/domain/PlanetRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerApplicationService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/player/application/PlayerEventListener.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/restadapter/PlanetShortDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/eventdtos/PlanetShortDto.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/restadapter/RobotDto.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/eventlistener/concreteevents/eventdtos/RobotDto.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotApplicationService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotEventHandleService.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/RobotStrategyService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobot.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/EnemyRobotRepository.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/application/TestServiceRobotStrategy.kt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/Robot.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/RobotRepository.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/RobotRepository.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AbstractRobotActionStrategy.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/AttackEnemyStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FarmResourceStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterActionStrategy.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterUpgradeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FighterUpgradeStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/FullInventoryStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerActionStrategy.kt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MoveStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RefreshEnergyStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RobotActionStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/RobotActionStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/UpgradeStrategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/robot/domain/robotactionstrategies/MinerUpgradeStrategy.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/application/StrategyService.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/kotlin/thkoeln/dungeon/strategy/domain/Strategy.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -84,34 +54,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Florian Lemmer/Desktop/pixelpaladin für maik/spieler 2 pixelpaladin/player-pixelpaladin2&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.35172415&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;profiler.jvm&quot;,
-    &quot;spring.configuration.checksum&quot;: &quot;258e7785832f34494e839e6d2ad46b34&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/Users/Florian Lemmer/Desktop/pixelpaladin für maik/spieler 2 pixelpaladin/player-pixelpaladin3",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.35172415",
+    "settings.editor.selected.configurable": "profiler.jvm",
+    "spring.configuration.checksum": "258e7785832f34494e839e6d2ad46b34",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;h2&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "h2"
     ]
   }
-}</component>
+}]]></component>
   <component name="ReactorSettings">
     <option name="notificationShown" value="true" />
   </component>
@@ -192,7 +163,8 @@
       <workItem from="1700779729670" duration="4295000" />
       <workItem from="1700821037090" duration="24910000" />
       <workItem from="1700912367920" duration="42974000" />
-      <workItem from="1700995452390" duration="315000" />
+      <workItem from="1700995452390" duration="1116000" />
+      <workItem from="1700996759515" duration="6971000" />
     </task>
     <task id="LOCAL-00001" summary="initial fixes">
       <option name="closed" value="true" />
@@ -226,7 +198,15 @@
       <option name="project" value="LOCAL" />
       <updated>1700827169999</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="added more parallelism, updated strategies, cleaned up code">
+      <option name="closed" value="true" />
+      <created>1700995840527</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1700995840527</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -248,7 +228,8 @@
     <MESSAGE value="updates to functioning player - no parallel event handling" />
     <MESSAGE value="partly process events in parallel, changed strategy(old code not deleted yet)" />
     <MESSAGE value="update helm chart version number to old number" />
-    <option name="LAST_COMMIT_MESSAGE" value="update helm chart version number to old number" />
+    <MESSAGE value="added more parallelism, updated strategies, cleaned up code" />
+    <option name="LAST_COMMIT_MESSAGE" value="added more parallelism, updated strategies, cleaned up code" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

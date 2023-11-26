@@ -53,7 +53,7 @@ class Robot(
     //job dictates, which resource the robot is supposed to farm (NOT which he CAN farm)
     var job: RobotJob = RobotJob.COAL_WORKER
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     var moveHistory: MutableList<UUID> = ArrayList()
 
     override fun toString(): String {

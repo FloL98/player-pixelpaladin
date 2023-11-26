@@ -157,7 +157,7 @@ class RobotApplicationService@Autowired constructor(
             else
                 possibleNeighbours.remove(lastVisitedPlanet)
         }
-        val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.hasBeenVisited() }
+        val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.visited }
         if(unvisitedPossibleNeighbours.isNotEmpty()) {
             return unvisitedPossibleNeighbours[Random.nextInt(0, unvisitedPossibleNeighbours.size)]
         }
@@ -191,7 +191,7 @@ class RobotApplicationService@Autowired constructor(
             possibleNeighbours.removeIf{robot.moveHistory.last == it.planetId}
         }
 
-        val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.hasBeenVisited() }
+        val unvisitedPossibleNeighbours = possibleNeighbours.filter { !it.visited }
             .sortedBy{it.movementDifficulty.difficulty}
         if(unvisitedPossibleNeighbours.isNotEmpty()) {
             return unvisitedPossibleNeighbours.first

@@ -95,7 +95,7 @@ class RobotStrategyService@Autowired constructor(
         val minerStrategies: List<RobotActionStrategy> = listOf(
             FullInventoryStrategy(currentGame, robot, player, strategy),
             RefreshEnergyStrategy(currentGame, robot, player, strategy),
-            AttackEnemyStrategy(this.gameWorld, currentGame, robot, player, strategy),
+            MinerAttackStrategy(this.gameWorld, currentGame, robot, player, strategy),
             MinerUpgradeStrategy(this.gameWorld, currentGame, robot, player, strategy),
             FarmResourceStrategy(currentGame, robot, player, strategy),
             MoveStrategy(this.gameWorld, currentGame, robot, player, strategy)

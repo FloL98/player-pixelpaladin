@@ -25,31 +25,22 @@ class Planet {
     var planetId: UUID = UUID.randomUUID()
 
 
-    var visited = false
-    fun hasBeenVisited(): Boolean {
-        return visited
-    }
-
+    var visited: Boolean = false
 
     @OneToOne//(cascade = [CascadeType.MERGE])
     var northNeighbour: Planet? = null
-        //protected set
 
     @OneToOne//(cascade = [CascadeType.MERGE])
     var eastNeighbour: Planet? = null
-        //protected set
 
     @OneToOne//(cascade = [CascadeType.MERGE])
     var southNeighbour: Planet? = null
-        //protected set
 
     @OneToOne//(cascade = [CascadeType.MERGE])
     var westNeighbour: Planet? = null
-        //protected set
 
     @Embedded
-    //@AttributeOverride(name="mineableResource", column=Column(nullable=true))
-    var mineableResource: MineableResource? = null //MineableResource()
+    var mineableResource: MineableResource? = null
 
 
     /*der wert dieser Variablen sollte eigentlich schon in mineableResource gespeichert sein, hat aber
@@ -65,8 +56,6 @@ class Planet {
 
     var gameWorldId: UUID = UUID.randomUUID()
 
-    @Transient
-    private var logger = LoggerFactory.getLogger(Planet::class.java)
 
     constructor(planetId: UUID) {
         this.planetId = planetId

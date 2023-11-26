@@ -267,12 +267,16 @@ class PlanetApplicationService @Autowired constructor(
     suspend fun handleResourceMinedEvent(resourceMinedEvent: ResourceMinedEvent){
         val mutex = entityLockService.planetLocks.computeIfAbsent(resourceMinedEvent.planetId) { Mutex() }
         mutex.withLock {
+            logger.warn("findby planet start")
             val planetOpt =
                 planetRepository.findById(resourceMinedEvent.planetId)
+            logger.warn("findby planet end")
             if (planetOpt.isPresent) {
                 val planet = planetOpt.get()
                 planet.mineableResource = planet.mineableResource?.decreaseBy(resourceMinedEvent.minedAmount) //resourceMinedEvent.resource
+                logger.warn("save planet start")
                 planetRepository.save(planet)
+                logger.warn("save planet end")
             }
         }
     }
